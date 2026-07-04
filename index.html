@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>&#127982; Hakka Cultural Concierge &middot; &#23458;&#23478;&#25991;&#21270;&#20351;&#32773;</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Noto+Serif+SC:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(175deg, #070c1c 0%, #0c1428 55%, #0e1a35 100%);
+  color: #dde4f2;
+}
+#app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* Header */
+#hdr {
+  background: rgba(6,10,28,0.94); backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(59,130,246,0.16);
+  padding: 10px 18px; display: flex; align-items: center;
+  gap: 12px; flex-shrink: 0; z-index: 10;
+}
+#hdr-left { flex: 1; min-width: 0; }
+#hdr-title {
+  font-size: 14px; font-weight: 700; color: #d4a820;
+  font-family: 'Cinzel', serif; letter-spacing: 0.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#hdr-sub { font-size: 9.5px; color: #3a5070; letter-spacing: 1.2px; text-transform: uppercase; margin-top: 1px; }
+#hdr-right { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+
+/* Body */
+#body-row { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+
+/* Character Panel */
+#char-panel {
+  width: 255px; min-width: 200px; flex-shrink: 0;
+  background: rgba(7,12,32,0.9); backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(59,130,246,0.16);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 14px 10px 16px; position: relative; overflow: hidden;
+}
+#bg-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 55%, rgba(37,99,235,0.12) 0%, transparent 70%);
+  animation: bgGlow 4s ease-in-out infinite;
+}
+#particles-wrap { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
+#char-wrap {
+  flex: 1; width: 100%; max-width: 200px; z-index: 2;
+  animation: float 3.6s ease-in-out infinite;
+  display: flex; align-items: center; justify-content: center;
+}
+#mei-lan { filter: drop-shadow(0 10px 32px rgba(37,99,235,0.38)); width: 100%; height: 100%; }
+#char-badge {
+  z-index: 2;
+  background: linear-gradient(135deg, rgba(30,96,204,0.65), rgba(37,99,235,0.4));
+  border: 1px solid rgba(59,130,246,0.38); border-radius: 14px;
+  padding: 7px 18px; text-align: center; backdrop-filter: blur(8px); margin-bottom: 8px;
+}
+#char-name { font-size: 15px; font-weight: 700; color: #d4a820; font-family: 'Cinzel', serif; }
+#char-role { font-size: 9px; color: #3a5070; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+#status-row { display: flex; align-items: center; gap: 7px; font-size: 10.5px; color: #3a5070; z-index: 2; }
+#status-led { width: 6px; height: 6px; border-radius: 50%; background: #6b7280; flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s; }
+
+/* Chat Panel */
+#chat-panel { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+#messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+#topics { padding: 0 16px 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+#input-row {
+  padding: 12px 16px; flex-shrink: 0;
+  border-top: 1px solid rgba(59,130,246,0.16);
+  background: rgba(5,8,22,0.84); backdrop-filter: blur(12px);
+  display: flex; gap: 8px; align-items: flex-end;
+}
+
+/* Messages */
+.msg-wrap { display: flex; align-items: flex-start; gap: 10px; animation: slideUp 0.28s ease-out; }
+.msg-wrap.user { flex-direction: row-reverse; }
+.msg-av {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 13px;
+}
+.msg-wrap.assistant .msg-av { background: linear-gradient(135deg, #92400e, #78350f); }
+.msg-wrap.user      .msg-av { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.msg-bbl { max-width: 78%; padding: 10px 13px; border-radius: 4px 16px 16px 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); }
+.msg-wrap.user .msg-bbl { border-radius: 16px 4px 16px 16px; background: rgba(37,99,235,0.18); border-color: rgba(59,130,246,0.28); }
+.msg-txt { margin: 0; font-size: 13px; line-height: 1.68; white-space: pre-wrap; word-break: break-word; color: #dde4f2; }
+.msg-wrap.user .msg-txt { color: #93c5fd; }
+.msg-ts { font-size: 9px; color: #1e3050; display: block; text-align: right; margin-top: 4px; }
+.dots { display: flex; gap: 5px; padding: 3px 0; }
+.dots span { width: 7px; height: 7px; border-radius: 50%; background: #3b82f6; display: block; }
+.dots span:nth-child(1) { animation: bounce 1.25s 0s ease-in-out infinite; }
+.dots span:nth-child(2) { animation: bounce 1.25s 0.22s ease-in-out infinite; }
+.dots span:nth-child(3) { animation: bounce 1.25s 0.44s ease-in-out infinite; }
+
+/* Buttons */
+.chip-btn {
+  padding: 5px 12px; border-radius: 999px; font-size: 11px;
+  border: 1px solid rgba(59,130,246,0.28); background: rgba(30,64,175,0.1);
+  color: #5a8fd0; cursor: pointer; transition: all 0.18s; font-family: inherit;
+}
+.chip-btn:hover { background: rgba(59,130,246,0.22); transform: translateY(-1px); }
+.lang-pill {
+  padding: 4px 9px; border-radius: 999px; font-size: 11px;
+  border: 1px solid rgba(59,130,246,0.18); background: transparent;
+  color: #3a5070; cursor: pointer; transition: all 0.18s; font-family: inherit;
+}
+#settings-btn {
+  width: 30px; height: 30px; border-radius: 50%; font-size: 14px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09);
+  color: #3a5070; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.18s;
+}
+#settings-btn:hover { background: rgba(255,255,255,0.1); }
+#mic-btn {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  border: 1.5px solid rgba(59,130,246,0.3); background: rgba(30,64,175,0.12);
+  color: #3b82f6; font-size: 15px; cursor: pointer; transition: all 0.18s;
+  display: flex; align-items: center; justify-content: center;
+}
+#chat-input {
+  flex: 1; padding: 9px 13px; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(59,130,246,0.22); border-radius: 18px;
+  color: #dde4f2; font-size: 13px; resize: none; line-height: 1.4;
+  max-height: 80px; overflow-y: auto; font-family: inherit; caret-color: #3b82f6;
+}
+#chat-input::placeholder { color: #2a3f5f; }
+#chat-input:focus { outline: none; border-color: rgba(59,130,246,0.45); }
+#send-btn {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; border: none;
+  background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;
+  font-size: 16px; cursor: pointer; opacity: 0.4; transition: all 0.18s;
+  display: flex; align-items: center; justify-content: center;
+}
+#send-btn:hover { filter: brightness(1.18); transform: scale(1.06); }
+#send-btn.active { opacity: 1; }
+
+/* Settings Modal */
+#settings-modal {
+  position: fixed; inset: 0; z-index: 1000;
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+#settings-modal.open { display: flex; }
+#modal-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.76); backdrop-filter: blur(8px); cursor: pointer; }
+#modal-box {
+  position: relative; z-index: 1;
+  background: linear-gradient(145deg, #0d1b3e, #0b1530);
+  border: 1px solid rgba(59,130,246,0.3); border-radius: 20px;
+  padding: 28px; max-width: 420px; width: 100%;
+  box-shadow: 0 24px 64px rgba(0,0,50,0.65);
+}
+#modal-box h2 { color: #d4a820; font-family: 'Cinzel', serif; font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.modal-sub { color: #3a5070; font-size: 12px; margin-bottom: 22px; }
+.modal-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.modal-label { color: #93c5fd; font-size: 13px; font-weight: 500; }
+.modal-hint { color: #2d4060; font-size: 11px; line-height: 1.5; margin-bottom: 18px; }
+.toggle-wrap {
+  width: 44px; height: 24px; border-radius: 12px; background: #1e3a5f;
+  position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0;
+}
+.toggle-wrap.on { background: #2563eb; }
+.toggle-knob {
+  position: absolute; top: 4px; left: 4px; width: 16px; height: 16px;
+  border-radius: 50%; background: white; transition: left 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.toggle-wrap.on .toggle-knob { left: 24px; }
+#api-section { display: none; margin-bottom: 18px; }
+#api-section label { color: #93c5fd; font-size: 12px; display: block; margin-bottom: 6px; font-weight: 500; }
+.api-row { display: flex; gap: 8px; }
+#api-key-inp {
+  flex: 1; padding: 9px 12px; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(59,130,246,0.3); border-radius: 8px;
+  color: #e2e8f0; font-size: 13px; font-family: monospace;
+}
+#api-key-inp:focus { outline: none; border-color: rgba(59,130,246,0.5); }
+#show-key-btn {
+  padding: 9px 12px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+  color: #64748b; font-size: 15px; cursor: pointer;
+}
+.cors-note {
+  background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.15);
+  border-radius: 8px; padding: 10px 12px; margin-bottom: 20px;
+  color: #92712a; font-size: 11px; line-height: 1.6;
+}
+.modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+.btn-cancel {
+  padding: 9px 18px; border-radius: 9px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1); color: #64748b; font-size: 13px;
+  cursor: pointer; font-family: inherit;
+}
+.btn-save {
+  padding: 9px 18px; border-radius: 9px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border: none; color: white; font-size: 13px; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+}
+
+/* Keyframes */
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes floatUp {
+  0%  { transform:translateY(0) rotate(0deg); opacity:0 }
+  8%  { opacity:0.65 }
+  92% { opacity:0.4 }
+  100%{ transform:translateY(-340px) rotate(20deg); opacity:0 }
+}
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-10px)} }
+@keyframes slideUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pulse  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.88)} }
+@keyframes bgGlow { 0%,100%{opacity:0.22} 50%{opacity:0.5} }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.28); border-radius: 2px; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  #body-row { flex-direction: column; }
+  #char-panel {
+    width: 100% !important; max-height: 215px;
+    flex-direction: row !important; padding: 8px 14px !important; align-items: center !important;
+  }
+  #char-wrap { max-height: 175px; max-width: 130px; flex: 0 0 130px !important; }
+  #char-badge, #status-row { align-items: flex-start; }
+}
+
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Header -->
+  <header id="hdr">
+    <span style="font-size:22px;flex-shrink:0">&#127982;</span>
+    <div id="hdr-left">
+      <div id="hdr-title">&#23458;&#23478;&#25991;&#21270;&#20351;&#32773; &middot; Hakka Cultural Concierge</div>
+      <div id="hdr-sub">&#128225; Offline &middot; Built-in Knowledge &middot; EN &middot; &#26222;&#36890;&#35441; &middot; &#23458;&#23478;&#35441;</div>
+    </div>
+    <div id="hdr-right">
+      <button class="lang-pill" data-lang="en">&#127468;&#127463; EN</button>
+      <button class="lang-pill" data-lang="zh">&#127464;&#127475; &#20013;&#25991;</button>
+      <button class="lang-pill" data-lang="hk">&#127982; &#23458;&#35805;</button>
+      <button id="settings-btn" title="Settings">&#9881;&#65039;</button>
+    </div>
+  </header>
+
+  <!-- Body -->
+  <div id="body-row">
+
+    <!-- Character Panel -->
+    <aside id="char-panel">
+      <div id="bg-glow"></div>
+      <div id="particles-wrap"></div>
+      <div id="char-wrap">
+        <svg id="mei-lan" viewBox="0 0 180 308" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="sk" cx="38%" cy="28%" r="72%">
+      <stop offset="0%" stop-color="#fce0be"/><stop offset="100%" stop-color="#efb87a"/>
+    </radialGradient>
+    <linearGradient id="hg" x1="25%" y1="0%" x2="75%" y2="100%">
+      <stop offset="0%" stop-color="#11112a"/><stop offset="85%" stop-color="#242455"/>
+    </linearGradient>
+    <linearGradient id="sg2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#70c8e5"/><stop offset="100%" stop-color="#c8ecf9"/>
+    </linearGradient>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c5fcc"/><stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <pattern id="fp" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="16" fill="#f0f7ff"/>
+      <circle cx="8" cy="8" r="4.2" fill="#2563eb" opacity="0.48"/>
+      <circle cx="8" cy="8" r="2.3" fill="#3b82f6" opacity="0.65"/>
+      <circle cx="8" cy="8" r="1"   fill="#93c5fd"/>
+      <circle cx="0"  cy="0"  r="1.8" fill="#1d4ed8" opacity="0.28"/>
+      <circle cx="16" cy="0"  r="1.8" fill="#1d4ed8" opacity="0.28"/>
+      <circle cx="0"  cy="16" r="1.8" fill="#1d4ed8" opacity="0.28"/>
+      <circle cx="16" cy="16" r="1.8" fill="#1d4ed8" opacity="0.28"/>
+      <circle cx="4.5"  cy="4.5"  r="1.2" fill="#93c5fd" opacity="0.38"/>
+      <circle cx="11.5" cy="4.5"  r="1.2" fill="#93c5fd" opacity="0.38"/>
+      <circle cx="4.5"  cy="11.5" r="1.2" fill="#93c5fd" opacity="0.38"/>
+      <circle cx="11.5" cy="11.5" r="1.2" fill="#93c5fd" opacity="0.38"/>
+    </pattern>
+    <radialGradient id="ck" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fb7185" stop-opacity="0.58"/>
+      <stop offset="100%" stop-color="#fb7185" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="180" height="308" fill="url(#sg2)"/>
+  <rect x="0" y="74" width="26" height="234" fill="#978f7e"/>
+  <line x1="0" y1="94" x2="26" y2="94" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="0" y1="114" x2="26" y2="114" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="0" y1="134" x2="26" y2="134" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="0" y1="154" x2="26" y2="154" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="0" y1="174" x2="26" y2="174" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="0" y1="194" x2="26" y2="194" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="0" y1="214" x2="26" y2="214" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="0" y1="234" x2="26" y2="234" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="0" y1="254" x2="26" y2="254" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="0" y1="274" x2="26" y2="274" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="0" y1="294" x2="26" y2="294" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+  <line x1="13" y1="74" x2="13" y2="308" stroke="#7c7264" stroke-width="0.4" opacity="0.3"/>
+  <rect x="154" y="74" width="26" height="234" fill="#978f7e"/>
+  <line x1="154" y1="94" x2="180" y2="94" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="154" y1="114" x2="180" y2="114" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="154" y1="134" x2="180" y2="134" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="154" y1="154" x2="180" y2="154" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="154" y1="174" x2="180" y2="174" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="154" y1="194" x2="180" y2="194" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="154" y1="214" x2="180" y2="214" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="154" y1="234" x2="180" y2="234" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="154" y1="254" x2="180" y2="254" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="154" y1="274" x2="180" y2="274" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+      <line x1="154" y1="294" x2="180" y2="294" stroke="#7c7264" stroke-width="0.6" opacity="0.6"/>
+  <rect x="26" y="196" width="128" height="112" fill="#b5ad96"/>
+  <rect x="27" y="197" width="20" height="17" rx="2" fill="hsl(38,16%,52%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="48" y="197" width="20" height="17" rx="2" fill="hsl(38,16%,55%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="69" y="197" width="20" height="17" rx="2" fill="hsl(38,16%,58%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="90" y="197" width="20" height="17" rx="2" fill="hsl(38,16%,52%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="111" y="197" width="20" height="17" rx="2" fill="hsl(38,16%,55%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="132" y="197" width="20" height="17" rx="2" fill="hsl(38,16%,58%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="37" y="215" width="20" height="17" rx="2" fill="hsl(38,16%,55%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="58" y="215" width="20" height="17" rx="2" fill="hsl(38,16%,58%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="79" y="215" width="20" height="17" rx="2" fill="hsl(38,16%,52%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="100" y="215" width="20" height="17" rx="2" fill="hsl(38,16%,55%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="121" y="215" width="20" height="17" rx="2" fill="hsl(38,16%,58%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="142" y="215" width="20" height="17" rx="2" fill="hsl(38,16%,52%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="27" y="233" width="20" height="17" rx="2" fill="hsl(38,16%,58%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="48" y="233" width="20" height="17" rx="2" fill="hsl(38,16%,52%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="69" y="233" width="20" height="17" rx="2" fill="hsl(38,16%,55%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="90" y="233" width="20" height="17" rx="2" fill="hsl(38,16%,58%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="111" y="233" width="20" height="17" rx="2" fill="hsl(38,16%,52%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="132" y="233" width="20" height="17" rx="2" fill="hsl(38,16%,55%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="37" y="251" width="20" height="17" rx="2" fill="hsl(38,16%,52%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="58" y="251" width="20" height="17" rx="2" fill="hsl(38,16%,55%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="79" y="251" width="20" height="17" rx="2" fill="hsl(38,16%,58%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="100" y="251" width="20" height="17" rx="2" fill="hsl(38,16%,52%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="121" y="251" width="20" height="17" rx="2" fill="hsl(38,16%,55%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="142" y="251" width="20" height="17" rx="2" fill="hsl(38,16%,58%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="27" y="269" width="20" height="17" rx="2" fill="hsl(38,16%,55%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="48" y="269" width="20" height="17" rx="2" fill="hsl(38,16%,58%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="69" y="269" width="20" height="17" rx="2" fill="hsl(38,16%,52%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="90" y="269" width="20" height="17" rx="2" fill="hsl(38,16%,55%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="111" y="269" width="20" height="17" rx="2" fill="hsl(38,16%,58%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="132" y="269" width="20" height="17" rx="2" fill="hsl(38,16%,52%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="37" y="287" width="20" height="17" rx="2" fill="hsl(38,16%,58%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="58" y="287" width="20" height="17" rx="2" fill="hsl(38,16%,52%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="79" y="287" width="20" height="17" rx="2" fill="hsl(38,16%,55%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="100" y="287" width="20" height="17" rx="2" fill="hsl(38,16%,58%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="121" y="287" width="20" height="17" rx="2" fill="hsl(38,16%,52%)" stroke="#9c9480" stroke-width="0.4"/>
+      <rect x="142" y="287" width="20" height="17" rx="2" fill="hsl(38,16%,55%)" stroke="#9c9480" stroke-width="0.4"/>
+  <!-- Lanterns -->
+  <line x1="167" y1="75" x2="167" y2="100" stroke="#888" stroke-width="1"/>
+  <ellipse cx="167" cy="111" rx="8" ry="12" fill="#b91c1c"/>
+  <ellipse cx="167" cy="111" rx="5" ry="8"  fill="rgba(255,80,80,0.18)"/>
+  <line x1="167" y1="99"  x2="167" y2="102" stroke="#f5c211" stroke-width="2"/>
+  <line x1="167" y1="123" x2="167" y2="126" stroke="#f5c211" stroke-width="2"/>
+  <line x1="162" y1="144" x2="162" y2="162" stroke="#888" stroke-width="1"/>
+  <ellipse cx="162" cy="171" rx="6" ry="9" fill="#b91c1c"/>
+  <line x1="162" y1="163" x2="162" y2="165" stroke="#f5c211" stroke-width="1.5"/>
+  <line x1="162" y1="180" x2="162" y2="182" stroke="#f5c211" stroke-width="1.5"/>
+  <!-- Greenery -->
+  <ellipse cx="167" cy="87" rx="14" ry="11" fill="#2d7a3c"/>
+  <ellipse cx="160" cy="83" rx="9"  ry="7"  fill="#3d9a4c"/>
+  <ellipse cx="174" cy="85" rx="7"  ry="6"  fill="#2d7a3c"/>
+  <ellipse cx="90"  cy="75" rx="24" ry="17" fill="#a8d8a8" opacity="0.5"/>
+  <ellipse cx="78"  cy="79" rx="16" ry="13" fill="#88c488" opacity="0.4"/>
+  <ellipse cx="102" cy="77" rx="15" ry="12" fill="#98d498" opacity="0.4"/>
+
+  <!-- Hair back + flowing sides -->
+  <ellipse cx="90" cy="77" rx="60" ry="63" fill="url(#hg)"/>
+  <path d="M 33 90 Q 15 150 18 232 Q 20 266 22 292" stroke="url(#hg)" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <path d="M 147 90 Q 165 154 162 236"               stroke="url(#hg)" stroke-width="19" fill="none" stroke-linecap="round"/>
+  <path d="M 151 88 Q 170 158 167 228"               stroke="url(#hg)" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.65"/>
+
+  <!-- Body - legs -->
+  <rect x="70" y="244" width="21" height="62" rx="5" fill="url(#bg2)"/>
+  <rect x="93" y="244" width="21" height="62" rx="5" fill="url(#bg2)"/>
+  <rect x="71" y="244" width="2"  height="62" fill="#1d4ed8" opacity="0.28"/>
+  <rect x="94" y="244" width="2"  height="62" fill="#1d4ed8" opacity="0.28"/>
+  <ellipse cx="80"  cy="304" rx="14" ry="6" fill="#181834"/>
+  <ellipse cx="104" cy="304" rx="14" ry="6" fill="#181834"/>
+
+  <!-- Torso -->
+  <rect x="47" y="153" width="86" height="97" rx="14" fill="#f0f7ff"/>
+  <rect x="47" y="153" width="86" height="97" rx="14" fill="url(#fp)" opacity="0.87"/>
+  <!-- Apron -->
+  <path d="M 59 190 L 121 190 L 118 262 Q 90 271 62 262 Z" fill="url(#bg2)"/>
+  <path d="M 59 190 L 121 190 L 118 262 Q 90 271 62 262 Z" fill="url(#fp)" opacity="0.2"/>
+  <path d="M 62 262 Q 90 270 118 262 L 118 268 Q 90 280 62 268 Z" fill="#bfdbfe" opacity="0.62"/>
+
+  <!-- Left arm -->
+  <path d="M 49 168 Q 24 198 26 240" stroke="#f0f7ff"  stroke-width="23" fill="none" stroke-linecap="round"/>
+  <path d="M 49 168 Q 24 198 26 240" stroke="url(#fp)" stroke-width="23" fill="none" stroke-linecap="round" opacity="0.87"/>
+  <ellipse cx="26" cy="241" rx="10.5" ry="9.5" fill="url(#sk)"/>
+  <ellipse cx="26" cy="234" rx="11.5" ry="4.5" fill="#dbeafe" opacity="0.68"/>
+
+  <!-- Right arm raised -->
+  <path d="M 131 168 Q 158 156 158 124" stroke="#f0f7ff"  stroke-width="21" fill="none" stroke-linecap="round"/>
+  <path d="M 131 168 Q 158 156 158 124" stroke="url(#fp)" stroke-width="21" fill="none" stroke-linecap="round" opacity="0.87"/>
+  <ellipse cx="158" cy="121" rx="11" ry="10" fill="url(#sk)"/>
+  <line x1="150" y1="115" x2="148" y2="106" stroke="url(#sk)" stroke-width="4.2" stroke-linecap="round"/>
+  <line x1="155" y1="112" x2="153" y2="103" stroke="url(#sk)" stroke-width="4.2" stroke-linecap="round"/>
+  <line x1="160" y1="112" x2="160" y2="103" stroke="url(#sk)" stroke-width="4.2" stroke-linecap="round"/>
+  <line x1="165" y1="114" x2="166" y2="105" stroke="url(#sk)" stroke-width="4.2" stroke-linecap="round"/>
+  <ellipse cx="158" cy="130" rx="10" ry="4" fill="#dbeafe" opacity="0.65" transform="rotate(-10 158 130)"/>
+
+  <!-- Collar + buttons -->
+  <path d="M 73 153 L 83 172 L 90 166 L 97 172 L 107 153" fill="#f0f7ff"/>
+  <path d="M 73 153 L 83 172 L 90 166 L 97 172 L 107 153" fill="url(#fp)" opacity="0.82"/>
+  <path d="M 77 153 Q 90 166 103 153" stroke="#2563eb" stroke-width="1.4" fill="none" opacity="0.65"/>
+  <circle cx="90" cy="161" r="2.5" fill="#1e40af"/>
+  <circle cx="90" cy="170" r="2.5" fill="#1e40af"/>
+
+  <!-- Neck -->
+  <rect x="82" y="139" width="16" height="20" rx="7" fill="url(#sk)"/>
+
+  <!-- Face -->
+  <ellipse cx="90" cy="89" rx="52" ry="56" fill="url(#sk)"/>
+  <ellipse cx="38" cy="92" rx="7" ry="10" fill="url(#sk)"/>
+  <ellipse cx="142" cy="92" rx="7" ry="10" fill="url(#sk)"/>
+  <ellipse id="blush-l" cx="62"  cy="104" rx="17" ry="11" fill="url(#ck)" opacity="0.48"/>
+  <ellipse id="blush-r" cx="118" cy="104" rx="17" ry="11" fill="url(#ck)" opacity="0.48"/>
+
+  <!-- Bangs + headband -->
+  <path d="M 40 79 Q 50 44 90 40 Q 130 44 140 79 Q 120 58 90 60 Q 60 58 40 79 Z" fill="url(#hg)"/>
+  <path d="M 47 72 Q 55 55 63 67 Q 69 53 77 65 Q 83 54 90 63 Q 97 54 103 65 Q 111 53 117 67 Q 125 55 133 72" fill="url(#hg)" opacity="0.88"/>
+  <path d="M 40 77 Q 57 50 90 45 Q 123 50 140 77 L 140 89 Q 123 61 90 55 Q 57 61 40 89 Z" fill="#2563eb" opacity="0.87"/>
+  <path d="M 40 77 Q 57 50 90 45 Q 123 50 140 77 L 140 89 Q 123 61 90 55 Q 57 61 40 89 Z" fill="url(#fp)" opacity="0.42"/>
+
+  <!-- Eyebrows (animated via JS) -->
+  <path id="brow-l" d="M 55 71 Q 65 66 75 69" stroke="#261500" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+  <path id="brow-r" d="M 105 69 Q 115 66 125 71" stroke="#261500" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+
+  <!-- Left eye -->
+  <ellipse id="eye-l" cx="65" cy="83" rx="14" ry="11" fill="white"/>
+  <g id="eye-l-g">
+    <circle cx="66" cy="83" r="10" fill="#2a1100"/>
+    <circle cx="66" cy="83" r="6.5" fill="#160900"/>
+    <circle cx="69" cy="80" r="3.5" fill="white"/>
+    <circle cx="63" cy="85" r="1.5" fill="white" opacity="0.42"/>
+    <line x1="59.0" y1="86.6" x2="54" y2="82" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="60.0" y1="85.1" x2="56" y2="78" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="61.7" y1="84.0" x2="59" y2="75" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="63.9" y1="83.6" x2="63" y2="74" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="66.1" y1="83.6" x2="67" y2="74" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="68.3" y1="84.3" x2="71" y2="76" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="70.5" y1="85.5" x2="75" y2="79" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="72.2" y1="87.0" x2="78" y2="83" stroke="#11112a" stroke-width="1.2"/>
+    <path d="M 51 85 Q 65 93 79 85" stroke="#b8704a" stroke-width="0.6" fill="none" opacity="0.26"/>
+  </g>
+
+  <!-- Right eye -->
+  <ellipse id="eye-r" cx="115" cy="83" rx="14" ry="11" fill="white"/>
+  <g id="eye-r-g">
+    <circle cx="114" cy="83" r="10" fill="#2a1100"/>
+    <circle cx="114" cy="83" r="6.5" fill="#160900"/>
+    <circle cx="117" cy="80" r="3.5" fill="white"/>
+    <circle cx="111" cy="85" r="1.5" fill="white" opacity="0.42"/>
+    <line x1="121.0" y1="86.6" x2="126" y2="82" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="120.0" y1="85.1" x2="124" y2="78" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="118.3" y1="84.0" x2="121" y2="75" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="116.1" y1="83.6" x2="117" y2="74" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="113.9" y1="83.6" x2="113" y2="74" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="111.7" y1="84.3" x2="109" y2="76" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="109.5" y1="85.5" x2="105" y2="79" stroke="#11112a" stroke-width="1.2"/>
+            <line x1="107.8" y1="87.0" x2="102" y2="83" stroke="#11112a" stroke-width="1.2"/>
+    <path d="M 101 85 Q 115 93 129 85" stroke="#b8704a" stroke-width="0.6" fill="none" opacity="0.26"/>
+  </g>
+
+  <!-- Nose -->
+  <path d="M 87 97 Q 89 103 90 104 Q 91 103 93 97" stroke="#b87048" stroke-width="1.1" fill="none" opacity="0.4"/>
+
+  <!-- Mouth closed (default) -->
+  <g id="mouth-closed">
+    <path d="M 79 112 Q 90 119 101 112" stroke="#d06078" stroke-width="1.7" fill="none"/>
+    <path d="M 80 113 Q 90 121 100 113 Q 90 118 80 113 Z" fill="#d07090" opacity="0.36"/>
+  </g>
+  <!-- Mouth open (talking) -->
+  <g id="mouth-open-g" style="display:none">
+    <path d="M 79 112 Q 90 120 101 112" stroke="#c0607a" stroke-width="1.5" fill="none"/>
+    <path d="M 80 113 Q 90 125 100 113 Q 90 120 80 113 Z" fill="#c06078" opacity="0.52"/>
+    <path d="M 83 119 Q 90 114 97 119" stroke="white" stroke-width="0.8" opacity="0.28"/>
+  </g>
+  <circle cx="77"  cy="114" r="1.5" fill="#c87890" opacity="0.26"/>
+  <circle cx="103" cy="114" r="1.5" fill="#c87890" opacity="0.26"/>
+
+  <!-- Hair flower ornament -->
+  <ellipse cx="152.0" cy="67.0" rx="5.5" ry="3" fill="#991b1b" opacity="0.72" transform="rotate(0 152.0 67.0)"/>
+      <ellipse cx="145.78" cy="75.56" rx="5.5" ry="3" fill="#991b1b" opacity="0.72" transform="rotate(72 145.78 75.56)"/>
+      <ellipse cx="135.72" cy="72.29" rx="5.5" ry="3" fill="#991b1b" opacity="0.72" transform="rotate(144 135.72 72.29)"/>
+      <ellipse cx="135.72" cy="61.71" rx="5.5" ry="3" fill="#991b1b" opacity="0.72" transform="rotate(216 135.72 61.71)"/>
+      <ellipse cx="145.78" cy="58.44" rx="5.5" ry="3" fill="#991b1b" opacity="0.72" transform="rotate(288 145.78 58.44)"/>
+  <circle cx="143" cy="67" r="7.5" fill="#b91c1c" opacity="0.82"/>
+  <circle cx="143" cy="67" r="4.2" fill="#fbbf24"/>
+  <circle cx="143" cy="67" r="2"   fill="#b91c1c"/>
+</svg>
+      </div>
+      <div id="char-badge">
+        <div id="char-name">&#32654;&#20185; &middot; Mei Lan</div>
+        <div id="char-role">Hakka Cultural Ambassador</div>
+      </div>
+      <div id="status-row">
+        <div id="status-led"></div>
+        <span id="status-text">Ready</span>
+      </div>
+    </aside>
+
+    <!-- Chat Panel -->
+    <main id="chat-panel">
+      <div id="messages"></div>
+      <div id="topics"></div>
+      <div id="input-row">
+        <button id="mic-btn" title="Voice input">&#127899;&#65039;</button>
+        <textarea id="chat-input" rows="1" placeholder="Ask about Hakka culture&#8230;"></textarea>
+        <button id="send-btn" title="Send">&#10148;</button>
+      </div>
+    </main>
+
+  </div><!-- /body-row -->
+</div><!-- /app -->
+
+<!-- Settings Modal -->
+<div id="settings-modal">
+  <div id="modal-bg"></div>
+  <div id="modal-box">
+    <h2>&#9881;&#65039; Settings</h2>
+    <p class="modal-sub">Configure your Hakka Concierge experience</p>
+
+    <div class="modal-row">
+      <span class="modal-label">&#127758; Online Mode (Anthropic API)</span>
+      <div id="toggle-wrap" class="toggle-wrap"><div class="toggle-knob"></div></div>
+    </div>
+    <p class="modal-hint">Requires your own Anthropic API key for advanced AI responses.<br>Offline mode works immediately with no key needed.</p>
+
+    <div id="api-section">
+      <label>Anthropic API Key</label>
+      <div class="api-row">
+        <input type="password" id="api-key-inp" placeholder="sk-ant-api03-&#8230;"/>
+        <button id="show-key-btn">&#128065;&#65039;</button>
+      </div>
+      <p class="modal-hint" style="margin-top:5px">Get your key at console.anthropic.com &middot; Stored in memory only (clears on page close)</p>
+    </div>
+
+    <div class="cors-note">
+      <strong style="color:#b8922a">&#9888; CORS Notice:</strong> Direct browser API calls may be blocked by browser security.
+      If online mode fails, the app automatically uses offline mode.
+      For guaranteed online mode, serve from a local web server:<br>
+      <code style="color:#9ca3af;font-size:10px">python3 -m http.server 8080</code>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-cancel" id="cancel-btn">Cancel</button>
+      <button class="btn-save"   id="save-btn">&#128190; Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+/* ─── KNOWLEDGE BASE ─────────────────────────────────────────────────────── */
+var KB = {
+  en: {
+    detect: [
+      [/histor|origin|where.*(from|come)|migrat|who are|hakka.*people/i, 'history'],
+      [/food|dish|eat|cuisin|salt.?baked|yong.?tau|tofu|lei.?cha|abacus|recipe/i, 'food'],
+      [/phrase|speak|say|word|learn|teach.*hakka|ngi.?ho|pronunc|language|dialect/i, 'lang'],
+      [/tulou|building|architect|earthen|weilong|round.*build/i, 'arch'],
+      [/famous|celebrit|notable|lee.?kuan|sun.?yat|deng.?xiao|yap.?ah|personality/i, 'celeb'],
+      [/singapore|sg|ying.?fo|hawker|sengkang|hougang/i, 'sg'],
+      [/culture|tradition|festival|custom|value|women|music|song/i, 'culture'],
+      [/hello|hi |hey|good morning|greet|help|what can|overview/i, 'menu']
+    ],
+    menu: `你好！Ngi hó! 🏮
+
+I'm Mei Lan (美兰) — your Hakka Cultural Concierge!
+
+I can tell you all about:
+
+📜 History & Origins — The 5 Great Migrations
+🏯 Tulou Architecture — UNESCO World Heritage
+🍜 Hakka Cuisine — Salt-baked chicken & more
+🗣️ Language — Phrases with romanized pronunciation
+⭐ Famous People — Global Hakka icons
+🇸🇬 Singapore — Local Hakka community & food
+🎋 Culture — Values, music & traditions
+
+Ask me anything in English, 普通话, or try some Hakka phrases! 🎊`,
+    history: `The Hakka Story 📜
+
+The Hakka (客家, Hak-ka = "guest families") are Han Chinese who undertook five great migrations from the Yellow River plains southward, fleeing wars, floods and famines over many centuries.
+
+🗺️ They settled in:
+• Guangdong 广东 (Meizhou, Huizhou — the Hakka heartland)
+• Fujian 福建 (Longyan, Zhangzhou)
+• Jiangxi 江西 and Taiwan 台湾
+
+🌍 Global diaspora:
+• SE Asia: Malaysia, Singapore, Indonesia, Thailand
+• Americas: Jamaica, Trinidad, Peru, USA
+• Africa: Mauritius, South Africa
+
+Called the "Jews of Asia" for their resilient global diaspora and fierce emphasis on education — over 80 million Hakka people live worldwide, shaping nations across four continents!`,
+    food: `Hakka Cuisine 🍜
+
+Hearty and resourceful — shaped by mountain living and migration!
+
+🐔 Salt-Baked Chicken 盐焗鸡 (yán jú jī)
+Whole chicken baked in hot sea salt — the crown jewel of Hakka cooking!
+
+🫕 Stuffed Tofu 酿豆腐 (niàng dòufǔ)
+Tofu filled with minced pork and fish — invented because mountains had no wheat for dumplings!
+
+🥩 Mei Cai Kou Rou 梅菜扣肉
+Slow-braised pork belly with preserved mustard greens — deeply savory.
+
+🍵 Lei Cha 擂茶
+Pounded tea, nuts, seeds and herbs — an ancient Hakka health drink.
+
+🥟 Abacus Seeds 算盘子
+Chewy taro dumplings shaped like abacus beads — Singapore's beloved Hakka treat!
+
+🍜 Yong Tau Foo
+Stuffed tofu and vegetables in clear broth — SE Asia's iconic hawker dish.`,
+    lang: `Hakka Phrases 🗣️
+
+客家话 (Hak-ka-fa) — 40+ million speakers worldwide!
+
+━━ Greetings 问候 ━━
+你好 • ngi hó • Hello
+早晨好 • zó shîn hó • Good morning
+你好冇？• ngi hó mó? • How are you?
+我好好 • ngai hó hó • I'm doing well!
+再见 • zai gien • Goodbye
+
+━━ Politeness 礼貌 ━━
+多谢 • tô ciak • Thank you
+欢迎 • fôn yin • Welcome
+唔好意思 • m̂ hó yi si • Excuse me / Sorry
+
+━━ Food 饮食 ━━
+好食！• hó shit! • Delicious!
+食饱未？• shit báu méi? • Have you eaten? (used as greeting!)
+食饭 • shit fan • Let's eat
+
+━━ Family 家庭 ━━
+屋下 • vuk ha • Home / Family
+阿爸 • á ba • Father
+阿姆 • á mme • Mother
+
+━━ Special ❤️ ━━
+我爱客家 • ngai oi hak-ka • I love Hakka!
+你系客家人冇？• ngi he hak-ka ngin mó? • Are you Hakka?`,
+    arch: `Hakka Architecture 🏯
+
+🔵 TULOU 土楼 — UNESCO World Heritage (2008)
+Massive earthen fortresses in Fujian province:
+• Circular or rectangular, 3–5 stories tall
+• Walls up to 1.5m thick — fireproof and earthquake-resistant
+• Houses 50–800 people of one entire clan
+• Self-sufficient: wells, storerooms and ancestral hall inside
+• Cold War CIA analysts mistook satellite images for missile silos! 😄
+
+🌿 WEILONG WU 围龙屋
+Horseshoe-shaped clan compounds in Guangdong — the curved rear "dragon" building embraces the main hall protectively.
+
+🏛️ ANCESTRAL HALL 祠堂
+The spiritual heart of every Hakka community — used for ceremonies, festivals and clan gatherings.
+
+📍 Visit: Fujian Yongding and Nanjing, Meizhou 梅州 (the Hakka Capital)`,
+    celeb: `Famous Hakka People ⭐
+
+🏛️ Nation Builders:
+• Sun Yat-sen 孙中山 — Father of Modern China
+• Deng Xiaoping 邓小平 — China's economic reform architect
+• Lee Kuan Yew 李光耀 — Singapore's founding Prime Minister
+• Yap Ah Loy 叶亚来 — Founder of Kuala Lumpur
+• Song Meiling 宋美龄 — First Lady of Republic of China
+• Tsai Ing-wen 蔡英文 — Taiwan's President
+
+💼 Business:
+• Li Ka-shing 李嘉诚 — Hong Kong's most iconic tycoon
+• Lim Goh Tong — Founder of Genting Highlands
+
+🌏 The Hakka spirit of perseverance and education has produced leaders who shaped nations across four continents!`,
+    sg: `Singapore Hakka 🇸🇬
+
+🏮 YING FO FUI KUN 应和会馆 (est. 1822)
+Founded just 3 years after Raffles — one of Singapore's oldest clan associations, still active near Bugis!
+
+📍 Community Areas:
+• Sengkang, Hougang, Punggol
+• Historical roots in Toa Payoh
+
+🍜 Must-Try Hakka Food:
+• Yong Tau Foo — Singapore's most beloved hawker dish!
+• Abacus Seeds 算盘子 — chewy taro dumplings, a local signature
+• Hakka Mee — broad flat noodles with minced pork sauce
+• Hakka Char Yoke — deep-fried pork belly with taro
+• Lei Cha 擂茶 — pounded tea rice bowl
+
+💡 About 11.4% of Singapore Chinese trace Hakka roots!`,
+    culture: `Hakka Culture 🎋
+
+📚 Core Values:
+• 耕读传家 — "Farming and learning passed down through generations"
+• Deep reverence for education — families sacrifice everything for their children's schooling
+• Filial piety 孝道 — ancestor veneration is sacred
+• Perseverance 坚韧 — hardship builds character
+
+🎵 Arts and Music:
+• Mountain Songs 客家山歌 — hauntingly beautiful folk singing
+• Hakka Opera 汉剧 — rich dramatic tradition
+• Indigo fabric dyeing and intricate papercraft
+
+👘 Traditional Dress:
+• Blue and white porcelain floral patterns (青花瓷 style — just like my outfit!)
+• Distinctive indigo-dyed aprons and headwear
+
+💪 Hakka Women:
+Unlike many historical Chinese groups, Hakka women never bound their feet, worked alongside men, and were celebrated for their strength and independence!`
+  },
+
+  zh: {
+    detect: [
+      [/历史|起源|迁徙|来自|是谁|哪里来/i, 'history'],
+      [/食物|美食|菜|吃|盐焗|豆腐|擂茶|算盘/i, 'food'],
+      [/语言|话|怎么说|词汇|发音|客家话/i, 'lang'],
+      [/土楼|建筑|房子|围龙/i, 'arch'],
+      [/名人|著名|人物|李光耀|孙中山|邓小平/i, 'celeb'],
+      [/新加坡|本地|应和|会馆|小贩/i, 'sg'],
+      [/文化|传统|节日|习俗|价值|妇女|音乐/i, 'culture']
+    ],
+    menu: `你好！Ngi hó！🏮
+
+我是美兰，您的客家文化使者！我可以分享：
+
+📜 历史起源 — 五次大迁徙
+🏯 土楼建筑 — 世界文化遗产
+🍜 客家美食 — 盐焗鸡、酿豆腐等
+🗣️ 客家语言 — 基础词汇与发音
+⭐ 著名客家人 — 李光耀、孙中山等
+🇸🇬 新加坡客家社区
+🎋 文化价值观与传统
+
+随时用中文、英文或客家话提问！🎊`,
+    history: `客家人的历史 📜
+
+客家人（Hak-ka，意为"来自远方的客人"）是汉族的一个支系，历经五次大迁徙，从中原黄河流域向南迁移，逃避战乱与灾荒。
+
+🗺️ 定居于：
+• 广东省（梅州、惠州——客家祖地）
+• 福建省（龙岩、漳州）
+• 江西省与台湾
+
+🌍 全球足迹：
+• 东南亚：马来西亚、新加坡、印尼、泰国
+• 美洲：牙买加、特立尼达、秘鲁、美国
+• 非洲：毛里求斯、南非
+
+全球客家人口超过8000万！被誉为"东方犹太人"，以遍布全球的侨民社区和对教育的极度重视著称。`,
+    food: `客家美食 🍜
+
+醇厚朴实，善用食材——源于山地生活的智慧！
+
+🐔 盐焗鸡 (yán jú jī)
+用热盐焗制整只鸡，皮脆肉嫩，客家菜之王！
+
+🫕 酿豆腐 (niàng dòufǔ)
+豆腐中塞入猪肉馅——因山区缺麦，以豆腐代替饺子皮！
+
+🥩 梅菜扣肉
+五花肉与梅干菜慢炖，咸香浓郁，下饭绝配。
+
+🍵 擂茶 (lèi chá)
+茶叶、花生、芝麻研磨而成，营养丰富的传统健康饮品。
+
+🥟 算盘子 (suàn pán zi)
+芋头做成算盘珠形状的粿条——新加坡客家招牌美食！
+
+🍜 酿豆腐（新加坡版）
+各类蔬菜塞鱼浆，东南亚最受欢迎的小贩美食之一！`,
+    lang: `客家话基础词汇 🗣️
+
+客家话（Hak-ka-fa）全球有超过4000万人使用！
+
+━━ 问候 ━━
+你好 • ngi hó • 你好
+早晨好 • zó shîn hó • 早上好
+你好冇？• ngi hó mó? • 你好吗？
+我好好 • ngai hó hó • 我很好！
+再见 • zai gien • 再见
+
+━━ 礼貌用语 ━━
+多谢 • tô ciak • 谢谢
+欢迎 • fôn yin • 欢迎
+唔好意思 • m̂ hó yi si • 对不起
+
+━━ 饮食 ━━
+好食！• hó shit! • 好吃！
+食饱未？• shit báu méi? • 你吃饱了吗？（问候语）
+食饭 • shit fan • 吃饭
+
+━━ 家庭 ━━
+屋下 • vuk ha • 家
+阿爸 • á ba • 父亲
+阿姆 • á mme • 母亲
+
+━━ 特别 ━━
+我爱客家 • ngai oi hak-ka • 我爱客家 💙`,
+    arch: `客家建筑 🏯
+
+🔵 土楼 — 2008年列入世界文化遗产
+福建圆形或方形土筑大楼：
+• 高3-5层，墙厚达1.5米，防火防震
+• 可容纳50至800人同住
+• 内有水井、仓库、祠堂，完全自给自足
+• 冷战时期CIA卫星照片误认为导弹基地！😄
+
+🌿 围龙屋
+广东梅州半月形客家民居，后部弧形如龙护卫主厅。
+
+🏛️ 祠堂
+每个客家族群的精神核心，用于祭祖、庆典和议事。
+
+📍 参观地点：
+• 福建永定、南靖土楼群
+• 广东梅州（客家祖地）`,
+    celeb: `著名客家人物 ⭐
+
+🏛️ 政治与建国：
+• 孙中山 — 中国国父
+• 邓小平 — 改革开放总设计师
+• 李光耀 — 新加坡开国总理（客家后裔）
+• 叶亚来 — 吉隆坡创始人兼甲必丹
+• 宋美龄 — 中华民国第一夫人
+• 蔡英文 — 台湾总统
+
+💼 商界：
+• 李嘉诚 — 香港首富
+• 林梧桐 — 云顶集团创始人
+
+🌏 客家人的坚韧精神和对教育的重视，使他们在全球四大洲塑造了历史！`,
+    sg: `新加坡客家社区 🇸🇬
+
+🏮 应和会馆（1822年创立）
+新加坡历史最悠久的华人会馆之一，位于武吉士区。
+
+📍 主要社区：盛港、后港、榜鹅
+
+🍜 必吃本地客家美食：
+• 酿豆腐 — 新加坡最受欢迎小贩美食
+• 算盘子 — 芋头粿，必吃！
+• 客家面（板面）
+• 客家炸肉 (Char Yoke)
+• 擂茶 — 多个小贩摊均有售
+
+💡 约11.4%的新加坡华人有客家血统！`,
+    culture: `客家文化与价值观 🎋
+
+📚 核心价值：
+• 耕读传家 — 农耕与读书代代相传
+• 对教育的极度重视——宁可节衣缩食也要供孩子读书
+• 孝道 — 祭祖是神圣不可忽视的传统
+• 坚韧勤劳 — 苦难是人生的老师
+
+🎵 艺术与音乐：
+• 客家山歌 — 独特动人的民歌
+• 汉剧（客家戏曲）
+• 靛蓝染布与精致剪纸工艺
+
+💪 客家女性：
+历史上不缠足，与男子并肩劳作，以坚强独立著称！`
+  },
+
+  hk: {
+    detect: [
+      [/history|histor/i, 'history'],
+      [/food|dish|eat/i, 'food'],
+      [/more|another|other/i, 'lang2']
+    ],
+    menu: `Ngi hó! 你好！🏮
+
+Ngai he Méi Lán, ngi ge Hak-Ka vun-fa sṳ̂-cia!
+(我是美兰，你的客家文化使者！)
+
+━━ 今日学客家话 Learn Hakka Today ━━
+
+👋 问候 Greetings:
+你好 • ngi hó • Hello!
+早晨好 • zó shîn hó • Good morning
+你好冇？• ngi hó mó? • How are you?
+我好好 • ngai hó hó • I'm fine!
+再见 • zai gien • Goodbye
+
+🙏 礼貌 Polite:
+多谢 • tô ciak • Thank you
+欢迎 • fôn yin • Welcome
+唔好意思 • m̂ hó yi si • Sorry / Excuse me
+
+🍚 饮食 Food:
+好食！• hó shit! • Delicious!
+食饱未？• shit báu méi? • Have you eaten?
+食饭 • shit fan • Let's eat!
+屋下 • vuk ha • Home / Family
+
+❤️ 我爱客家！Ngai oi Hak-Ka!
+
+Ask me anything! 随时提问！🎊`,
+    history: `Hakka History 客家历史 📜
+
+Ngai Hak-Ka ngin! (我是客家人！)
+
+客家人 Hak-Ka ngin = "Guest family people"
+Five Great Migrations 五次大迁徙:
+
+从中原 From Central China →
+广东 Guangdong, 福建 Fujian, 台湾 Taiwan →
+全世界 All over the world!
+
+客家话 Hakka vocabulary:
+迁徙 • cien si • Migration
+客人 • hak ngin • Guest person
+家乡 • ga hiong • Hometown
+坚强 • gian kiong • Resilient / Strong`,
+    food: `Hakka Food 客家美食 🍜
+
+客家话 Hakka food words:
+好食！• hó shit! • Delicious!
+鸡 • gai • Chicken
+豆腐 • teu fu • Tofu
+猪肉 • zhu nguk • Pork
+菜 • choi • Vegetables
+茶 • ca • Tea
+食饭 • shit fan • Eat rice!
+
+Famous dishes:
+• 盐焗鸡 Salt-baked Chicken — the crown jewel!
+• 酿豆腐 Stuffed Tofu — no wheat, so use tofu!
+• 算盘子 Abacus Seeds — taro dumplings
+• 擂茶 Lei Cha — pounded tea
+
+食饱未？(shit báu méi?) = "Have you eaten?"
+This IS a Hakka greeting! 🎋`,
+    lang2: `More Hakka Phrases 更多客家话 🗣️
+
+━━ Numbers 数字 ━━
+一 • id • One
+二 • ngi • Two
+三 • sam • Three
+四 • si • Four
+五 • ng • Five
+十 • ship • Ten
+
+━━ Colors 颜色 ━━
+红 • fung • Red (like our lanterns!)
+蓝 • lam • Blue (like our clothes!)
+白 • pak • White
+黑 • het • Black
+
+━━ Feelings 感情 ━━
+快乐 • kuai lok • Happy
+思念 • si niam • Missing / Longing
+爱 • oi • Love
+
+━━ Nature 自然 ━━
+山 • san • Mountain
+水 • shui • Water
+田 • tien • Rice field
+
+我爱客家！Ngai oi Hak-Ka! 💙`
+  }
+};
+
+var SYSTEM = 'You are Mei Lan (美兰), a warm Hakka cultural concierge in traditional blue-and-white porcelain-patterned Hakka clothing. Respond in the user\'s language. KEY KNOWLEDGE: 客家 Hak-ka="guest families", 5 great migrations; Tulou UNESCO buildings; Famous: Sun Yat-sen, Lee Kuan Yew, Deng Xiaoping, Yap Ah Loy; Food: salt-baked chicken, stuffed tofu, abacus seeds, Yong Tau Foo; Values: 耕读传家, perseverance; Singapore: Ying Fo Fui Kun 1822; Hakka phrases: ngi hó=hello, tô ciak=thank you, hó shit=delicious. Be warm, concise, enthusiastic.';
+
+var LANGS = [
+  {id:'en', flag:'🇬🇧', label:'EN', ph:'Ask about Hakka history, food, language…'},
+  {id:'zh', flag:'🇨🇳', label:'中文', ph:'用普通话提问关于客家文化…'},
+  {id:'hk', flag:'🏮', label:'客话', ph:'学客家话 / Learn Hakka phrases…'}
+];
+
+var TOPICS = {
+  en: [['📜 History','Tell me about Hakka history'],['🍜 Food','What are famous Hakka dishes?'],['🗣️ Phrases','Teach me Hakka phrases'],['🏯 Tulou','What is a Tulou building?'],['⭐ Famous','Who are famous Hakka people?'],['🇸🇬 Singapore','Tell me about Singapore Hakka']],
+  zh: [['📜 历史','告诉我客家人的历史'],['🍜 美食','有哪些著名的客家菜？'],['🗣️ 语言','教我客家话词汇'],['🏯 土楼','什么是土楼？'],['⭐ 名人','著名客家人物有哪些？'],['🇸🇬 新加坡','新加坡的客家社区']],
+  hk: [['🗣️ Phrases','Teach me Hakka phrases'],['🍜 Food','Famous Hakka dishes?'],['📜 History','Tell me Hakka history'],['🏯 Tulou','What is Tulou?']]
+};
+
+var WELCOME = '你好！Ngi hó! 🏮\n\nI\'m Mei Lan (美兰) — your Hakka Cultural Concierge!\n\nI speak English, 普通话 (Mandarin), and can teach you 客家话 (Hakka dialect). I know all about Hakka history, food, architecture, language, and culture.\n\nTap a topic below or ask me anything! 🎋';
+
+/* ─── STATE ────────────────────────────────────────────────────────────────── */
+var currentLang = 'en';
+var onlineMode = false;
+var storedKey = '';
+var isLoading = false;
+var isMouthOpen = false;
+var mouthInterval = null;
+var recognition = null;
+var isListening = false;
+var msgHistory = [];
+var topicsVisible = true;
+
+/* ─── DOM REFS ────────────────────────────────────────────────────────────── */
+var messagesEl = document.getElementById('messages');
+var chatInput  = document.getElementById('chat-input');
+var sendBtn    = document.getElementById('send-btn');
+var micBtn     = document.getElementById('mic-btn');
+var topicsEl   = document.getElementById('topics');
+var statusLed  = document.getElementById('status-led');
+var statusTxt  = document.getElementById('status-text');
+var hdrSub     = document.getElementById('hdr-sub');
+
+/* SVG animated elements */
+var eyeL       = document.getElementById('eye-l');
+var eyeR       = document.getElementById('eye-r');
+var eyeLG      = document.getElementById('eye-l-g');
+var eyeRG      = document.getElementById('eye-r-g');
+var browL      = document.getElementById('brow-l');
+var browR      = document.getElementById('brow-r');
+var blushL     = document.getElementById('blush-l');
+var blushR     = document.getElementById('blush-r');
+var mouthClose = document.getElementById('mouth-closed');
+var mouthOpenG = document.getElementById('mouth-open-g');
+
+/* ─── CHARACTER ANIMATION ─────────────────────────────────────────────────── */
+function setBlink(val) {
+  var ry = val ? 1.2 : 11;
+  eyeL.setAttribute('ry', ry);
+  eyeR.setAttribute('ry', ry);
+  eyeLG.style.display = val ? 'none' : '';
+  eyeRG.style.display = val ? 'none' : '';
+}
+
+function setMouthOpen(val) {
+  isMouthOpen = val;
+  mouthClose.style.display = val ? 'none' : '';
+  mouthOpenG.style.display = val ? '' : 'none';
+}
+
+function setMood(mood) {
+  var off = mood === 'surprised' ? -5 : mood === 'thinking' ? 1 : 0;
+  browL.setAttribute('d', 'M 55 '+(71+off)+' Q 65 '+(66+off)+' 75 '+(69+off));
+  browR.setAttribute('d', 'M 105 '+(69+off)+' Q 115 '+(66+off)+' 125 '+(71+off));
+  var bo = mood === 'happy' ? 0.48 : 0.2;
+  blushL.setAttribute('opacity', bo);
+  blushR.setAttribute('opacity', bo);
+}
+
+function startBlinking() {
+  function schedule() {
+    setTimeout(function() {
+      setBlink(true);
+      setTimeout(function() { setBlink(false); schedule(); }, 140);
+    }, 3200 + Math.random() * 2800);
+  }
+  schedule();
+}
+
+function updateStatus(state) {
+  var map = {
+    ready:    { c: '#6b7280', g: false, t: 'Ready' },
+    online:   { c: '#22c55e', g: false, t: 'Online · AI Active' },
+    thinking: { c: '#3b82f6', g: true,  t: 'Thinking\u2026' },
+    speaking: { c: '#f5c211', g: true,  t: 'Speaking\u2026' },
+    listening:{ c: '#ef4444', g: true,  t: 'Listening\u2026' }
+  };
+  var s = map[state] || map.ready;
+  statusLed.style.background = s.c;
+  statusLed.style.boxShadow  = s.g ? '0 0 7px ' + s.c : 'none';
+  statusLed.style.animation  = s.g ? 'pulse 1s infinite' : 'none';
+  statusTxt.textContent = s.t;
+}
+
+/* ─── TTS — Female Voice ───────────────────────────────────────────────────── */
+
+/* Pre-load voice list (browsers populate this asynchronously) */
+var voiceList = [];
+function loadVoices() { voiceList = window.speechSynthesis.getVoices(); }
+if (window.speechSynthesis) {
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+/*
+ * Female voice name fragments to match, ordered by preference.
+ * Covers: Windows (Zira/Huihui/Yaoyao), macOS/iOS (Samantha/Ting-Ting/Sin-Ji),
+ * Chrome (Google … Female), Android (Chinese Female).
+ */
+var FEMALE_EN = [
+  'samantha','zira','hazel','susan','victoria','karen','moira','fiona','allison',
+  'ava','nova','joanna','salli','ivy','kendra','kimberly','female','woman','girl',
+  'google uk english female','google us english'
+];
+var FEMALE_ZH = [
+  'ting-ting','tingting','sin-ji','sinji','mei-jia','meijia','huihui','yaoyao',
+  'li-na','lina','chinese female','female','woman',
+  '\u4e01\u5f53','\u6c49\u8bed' /* 丁当, 汉语 */
+];
+
+function pickFemaleVoice(lang) {
+  var voices = voiceList.length ? voiceList : window.speechSynthesis.getVoices();
+  var isZh   = (lang !== 'en');
+  var tLang  = isZh ? 'zh' : 'en';
+  var names  = isZh ? FEMALE_ZH : FEMALE_EN;
+
+  /* Pass 1 — matching language code + female keyword */
+  for (var i = 0; i < voices.length; i++) {
+    var v = voices[i], vn = v.name.toLowerCase(), vl = v.lang.toLowerCase();
+    if (vl.indexOf(tLang) !== -1) {
+      for (var j = 0; j < names.length; j++) {
+        if (vn.indexOf(names[j]) !== -1) return v;
+      }
+    }
+  }
+  /* Pass 2 — any voice matching female keyword (ignore lang) */
+  for (var i = 0; i < voices.length; i++) {
+    var vn = voices[i].name.toLowerCase();
+    for (var j = 0; j < names.length; j++) {
+      if (vn.indexOf(names[j]) !== -1) return voices[i];
+    }
+  }
+  /* Pass 3 — first voice matching language (better than random default) */
+  for (var i = 0; i < voices.length; i++) {
+    if (voices[i].lang.toLowerCase().indexOf(tLang) !== -1) return voices[i];
+  }
+  return null; /* browser default */
+}
+
+function speak(text, lang) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  /* Strip emoji surrogates, box-drawing chars and bullets */
+  var clean = text.replace(/[\uD800-\uDFFF]/g, '')
+                  .replace(/[\u2500-\u257F]/g, '')
+                  .replace(/\u2022/g, '')
+                  .replace(/\s+/g, ' ').trim();
+  var utt  = new SpeechSynthesisUtterance(clean);
+  var fv   = pickFemaleVoice(lang);
+  if (fv) {
+    utt.voice = fv;
+    utt.lang  = fv.lang;           /* use the voice's own locale */
+  } else {
+    utt.lang  = lang === 'en' ? 'en-US' : 'zh-CN';
+  }
+  utt.rate  = 0.88;
+  utt.pitch = 1.18;                /* slightly raised pitch for feminine tone */
+  utt.volume = 1.0;
+  utt.onstart = function() {
+    updateStatus('speaking');
+    mouthInterval = setInterval(function() { setMouthOpen(!isMouthOpen); }, 175);
+  };
+  utt.onend = utt.onerror = function() {
+    clearInterval(mouthInterval);
+    setMouthOpen(false);
+    updateStatus(onlineMode && storedKey ? 'online' : 'ready');
+  };
+  window.speechSynthesis.speak(utt);
+}
+
+/* ─── MESSAGES ────────────────────────────────────────────────────────────── */
+function addMessage(role, content) {
+  var ts = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  var div = document.createElement('div');
+  div.className = 'msg-wrap ' + role;
+  var av = document.createElement('div');
+  av.className = 'msg-av';
+  av.textContent = role === 'user' ? '\uD83D\uDC64' : '\uD83C\uDFEE';
+  var bbl = document.createElement('div');
+  bbl.className = 'msg-bbl';
+  var p = document.createElement('p');
+  p.className = 'msg-txt';
+  p.textContent = content;
+  var ts_el = document.createElement('span');
+  ts_el.className = 'msg-ts';
+  ts_el.textContent = ts;
+  bbl.appendChild(p);
+  bbl.appendChild(ts_el);
+  div.appendChild(av);
+  div.appendChild(bbl);
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  msgHistory.push({role: role, content: content});
+}
+
+var loadingEl = null;
+function showLoading() {
+  loadingEl = document.createElement('div');
+  loadingEl.className = 'msg-wrap assistant';
+  loadingEl.innerHTML = '<div class="msg-av">\uD83C\uDFEE</div><div class="msg-bbl"><div class="dots"><span></span><span></span><span></span></div></div>';
+  messagesEl.appendChild(loadingEl);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+function hideLoading() {
+  if (loadingEl) { loadingEl.remove(); loadingEl = null; }
+}
+
+/* ─── OFFLINE REPLY ───────────────────────────────────────────────────────── */
+function getOfflineReply(text) {
+  var db = KB[currentLang] || KB.en;
+  var pats = (db.detect && db.detect.length) ? db.detect : KB.en.detect;
+  for (var i = 0; i < pats.length; i++) {
+    var re = pats[i][0], key = pats[i][1];
+    if (re.test(text)) {
+      var r = db[key] || KB.en[key];
+      if (r) return r;
+    }
+  }
+  return db.menu || KB.en.menu;
+}
+
+/* ─── SEND MESSAGE ────────────────────────────────────────────────────────── */
+async function sendMessage(text) {
+  if (!text || !text.trim() || isLoading) return;
+  text = text.trim();
+  isLoading = true;
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+  sendBtn.classList.remove('active');
+  hideTopic();
+  addMessage('user', text);
+  showLoading();
+  setMood('thinking');
+  updateStatus('thinking');
+
+  var reply;
+  if (onlineMode && storedKey) {
+    try {
+      var hint = currentLang === 'zh' ? '\u8bf7\u7528\u666e\u901a\u8bdd\u56de\u7b54\u3002' :
+                 currentLang === 'hk' ? '\u8bf7\u6559\u5ba2\u5bb6\u8bdd\u8bcd\u6c47\uff0c\u4e2d\u82f1\u89e3\u91ca\u3002' : '';
+      var apiMsgs = msgHistory.slice(0, -1).map(function(m) { return {role: m.role, content: m.content}; });
+      apiMsgs.push({role: 'user', content: hint + text});
+      var res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': storedKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:1000, system:SYSTEM, messages:apiMsgs})
+      });
+      var data = await res.json();
+      reply = data.content && data.content[0] && data.content[0].text;
+      if (!reply) throw new Error('empty');
+    } catch(e) {
+      console.warn('API error:', e.message);
+      reply = getOfflineReply(text) + '\n\n\u26a0\ufe0f Online mode unavailable \u2014 using built-in knowledge.';
+    }
+  } else {
+    await new Promise(function(r) { setTimeout(r, 500 + Math.random()*400); });
+    reply = getOfflineReply(text);
+  }
+
+  hideLoading();
+  setMood('happy');
+  addMessage('assistant', reply);
+  speak(reply, currentLang);
+  isLoading = false;
+}
+
+/* ─── VOICE INPUT ─────────────────────────────────────────────────────────── */
+function toggleListen() {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Speech recognition requires Chrome or Edge.'); return; }
+  if (isListening) { if (recognition) recognition.stop(); return; }
+  recognition = new SR();
+  recognition.lang = currentLang === 'en' ? 'en-US' : 'zh-CN';
+  recognition.onstart = function() {
+    isListening = true;
+    micBtn.textContent = '\uD83D\uDD34';
+    micBtn.style.color = '#ef4444';
+    micBtn.style.borderColor = 'rgba(239,68,68,0.6)';
+    updateStatus('listening');
+  };
+  recognition.onresult = function(e) {
+    chatInput.value = e.results[0][0].transcript;
+    chatInput.dispatchEvent(new Event('input'));
+  };
+  recognition.onerror = recognition.onend = function() {
+    isListening = false;
+    micBtn.textContent = '\uD83C\uDF99\uFE0F';
+    micBtn.style.color = '#3b82f6';
+    micBtn.style.borderColor = 'rgba(59,130,246,0.3)';
+    updateStatus(onlineMode && storedKey ? 'online' : 'ready');
+  };
+  recognition.start();
+}
+
+/* ─── TOPICS ──────────────────────────────────────────────────────────────── */
+function renderTopics() {
+  var topics = TOPICS[currentLang] || TOPICS.en;
+  topicsEl.innerHTML = '';
+  topics.forEach(function(item) {
+    var btn = document.createElement('button');
+    btn.className = 'chip-btn';
+    btn.textContent = item[0];
+    btn.onclick = (function(q) { return function() { sendMessage(q); }; })(item[1]);
+    topicsEl.appendChild(btn);
+  });
+  topicsEl.style.display = topicsVisible ? 'flex' : 'none';
+}
+
+function hideTopic() { topicsVisible = false; topicsEl.style.display = 'none'; }
+
+/* ─── LANGUAGE ────────────────────────────────────────────────────────────── */
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-pill').forEach(function(btn) {
+    var active = btn.dataset.lang === lang;
+    btn.style.background   = active ? 'rgba(59,130,246,0.22)' : 'transparent';
+    btn.style.color        = active ? '#7ab8f5' : '#3a5070';
+    btn.style.borderColor  = active ? 'rgba(59,130,246,0.5)' : 'rgba(59,130,246,0.18)';
+    btn.style.fontWeight   = active ? '600' : '400';
+  });
+  var l = LANGS.find(function(x) { return x.id === lang; }) || LANGS[0];
+  chatInput.placeholder = l.ph;
+  renderTopics();
+}
+
+/* ─── SETTINGS ────────────────────────────────────────────────────────────── */
+var settingsModal = document.getElementById('settings-modal');
+var apiKeyInp    = document.getElementById('api-key-inp');
+var toggleWrap   = document.getElementById('toggle-wrap');
+var apiSection   = document.getElementById('api-section');
+
+toggleWrap.addEventListener('click', function() {
+  toggleWrap.classList.toggle('on');
+  apiSection.style.display = toggleWrap.classList.contains('on') ? 'block' : 'none';
+});
+
+document.getElementById('show-key-btn').addEventListener('click', function() {
+  var inp = document.getElementById('api-key-inp');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  this.textContent = inp.type === 'password' ? '\uD83D\uDC41\uFE0F' : '\uD83D\uDE48';
+});
+
+function openSettings() {
+  apiKeyInp.value = storedKey;
+  if (onlineMode) toggleWrap.classList.add('on'); else toggleWrap.classList.remove('on');
+  apiSection.style.display = onlineMode ? 'block' : 'none';
+  settingsModal.classList.add('open');
+}
+function closeSettings() { settingsModal.classList.remove('open'); }
+function saveSettings() {
+  onlineMode = toggleWrap.classList.contains('on');
+  storedKey  = apiKeyInp.value.trim();
+  closeSettings();
+  var stat = onlineMode && storedKey ? 'online' : 'ready';
+  updateStatus(stat);
+  hdrSub.textContent = onlineMode && storedKey
+    ? '\uD83D\uDFE2 Online \u00B7 AI-Powered \u00B7 EN \u00B7 \u666E\u901A\u8BDD \u00B7 \u5BA2\u5BB6\u8BDD'
+    : '\uD83D\uDCE1 Offline \u00B7 Built-in Knowledge \u00B7 EN \u00B7 \u666E\u901A\u8BDD \u00B7 \u5BA2\u5BB6\u8BDD';
+}
+
+document.getElementById('settings-btn').addEventListener('click', openSettings);
+document.getElementById('modal-bg').addEventListener('click', closeSettings);
+document.getElementById('cancel-btn').addEventListener('click', closeSettings);
+document.getElementById('save-btn').addEventListener('click', saveSettings);
+
+/* ─── PARTICLES ───────────────────────────────────────────────────────────── */
+function createParticles() {
+  var wrap = document.getElementById('particles-wrap');
+  if (!wrap) return;
+  var pts = [
+    {l:'7%',d:'0s',t:'7s',e:'\uD83C\uDFEE',s:'11px'},
+    {l:'20%',d:'2.5s',t:'9s',e:'\uD83C\uDF38',s:'9px'},
+    {l:'38%',d:'1s',t:'6.5s',e:'\uD83C\uDF8B',s:'10px'},
+    {l:'56%',d:'3.8s',t:'8s',e:'\uD83C\uDFEE',s:'8px'},
+    {l:'72%',d:'0.6s',t:'7.5s',e:'\uD83C\uDF38',s:'9px'},
+    {l:'86%',d:'2.2s',t:'6s',e:'\uD83C\uDF8B',s:'8px'}
+  ];
+  pts.forEach(function(p) {
+    var d = document.createElement('div');
+    d.style.cssText = 'position:absolute;bottom:-20px;left:'+p.l+';font-size:'+p.s
+      +';opacity:0;animation:floatUp '+p.t+' '+p.d+' ease-in infinite;pointer-events:none';
+    d.textContent = p.e;
+    wrap.appendChild(d);
+  });
+}
+
+/* ─── INPUT EVENTS ────────────────────────────────────────────────────────── */
+sendBtn.addEventListener('click', function() { sendMessage(chatInput.value); });
+micBtn.addEventListener('click', toggleListen);
+
+chatInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(chatInput.value); }
+});
+chatInput.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 80) + 'px';
+  if (this.value.trim()) sendBtn.classList.add('active'); else sendBtn.classList.remove('active');
+});
+
+document.querySelectorAll('.lang-pill').forEach(function(btn) {
+  btn.addEventListener('click', function() { setLang(this.dataset.lang); });
+});
+
+/* ─── INIT ────────────────────────────────────────────────────────────────── */
+function init() {
+  createParticles();
+  startBlinking();
+  setLang('en');
+  addMessage('assistant', WELCOME);
+  topicsVisible = true;
+  renderTopics();
+  updateStatus('ready');
+}
+
+init();
+
+</script>
+</body>
+</html>
