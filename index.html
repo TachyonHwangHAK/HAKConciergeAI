@@ -686,12 +686,23 @@ pre.testlog{
             <div class="switch" id="swTts" role="switch" aria-checked="true" tabindex="0" aria-label="Speak replies"></div>
           </div>
           <div class="row">
-            <div><div class="lbl" data-t="set.rate">Speech rate</div><div class="sub"><span id="rateVal">1.00</span>×</div></div>
-            <input type="range" id="rngRate" min="0.6" max="1.4" step="0.05" value="1">
+            <div><div class="lbl" data-t="set.voice2">Voice for this character</div>
+                 <div class="sub" data-t="set.voice2Sub">Auto picks the best installed voice matching the concierge on stage.</div>
+                 <div class="sub" id="voiceNow"></div></div>
+            <select id="selVoice"><option value="auto">Auto</option></select>
           </div>
           <div class="row">
-            <div><div class="lbl" data-t="set.pitch">Speech pitch</div><div class="sub"><span id="pitchVal">1.05</span></div></div>
-            <input type="range" id="rngPitch" min="0.6" max="1.6" step="0.05" value="1.05">
+            <div><div class="lbl" data-t="set.pace">Pace</div><div class="sub"><span id="rateVal">1.00</span>×</div></div>
+            <input type="range" id="rngRate" min="0.75" max="1.25" step="0.05" value="1">
+          </div>
+          <div class="row">
+            <div><div class="lbl" data-t="set.warmth">Warmth</div><div class="sub"><span id="pitchVal">1.00</span>×</div></div>
+            <input type="range" id="rngPitch" min="0.8" max="1.25" step="0.05" value="1">
+          </div>
+          <div class="row">
+            <div><div class="lbl" data-t="set.preview">Preview voice</div>
+                 <div class="sub" data-t="set.ttsSub">Uses your device's built-in speech engine.</div></div>
+            <button class="btn" id="btnPreview">▶</button>
           </div>
           <div class="row">
             <div><div class="lbl" data-t="set.hakvoice">Hakka voice fallback</div><div class="sub" data-t="set.hakvoiceSub">No browser ships a Hakka voice. Hakka lines are spoken with the closest Chinese voice and always shown with Pha̍k-fa-sṳ romanisation.</div></div>
@@ -777,8 +788,9 @@ const S = {
   physics: true,
   subtitles: true,
   tts: true,
-  rate: 1.0,
-  pitch: 1.05,
+  voiceURI: "auto",      // "auto" = pick a voice that matches the character
+  rate: 1.0,             // user tone multipliers on top of the per-character base
+  pitch: 1.0,
   speaking: false,
   listening: false,
   busy: false,
@@ -805,6 +817,7 @@ const UI = {
     "set.physics": "Hair & cloth physics", "set.physicsSub": "Verlet simulation on hair strands and clothing hems.",
     "set.voice": "Voice", "set.tts": "Speak replies", "set.ttsSub": "Uses your device's built-in speech engine.",
     "set.rate": "Speech rate", "set.pitch": "Speech pitch",
+    "set.voice2": "Voice for this character", "set.voice2Sub": "Auto picks the best installed voice matching the concierge on stage.", "set.auto": "Auto — match character", "set.preview": "Preview voice", "set.warmth": "Warmth (pitch)", "set.pace": "Pace (rate)",
     "set.hakvoice": "Hakka voice fallback",
     "set.hakvoiceSub": "No browser ships a Hakka voice. Hakka lines use the closest Chinese voice and always show Pha̍k-fa-sṳ romanisation.",
     "set.diag": "Diagnostics", "set.run": "Run self-test", "set.reset": "Reset conversation",
@@ -836,6 +849,7 @@ const UI = {
     "set.physics": "头发与衣物物理", "set.physicsSub": "对发丝与衣摆使用 Verlet 物理模拟。",
     "set.voice": "语音", "set.tts": "朗读回覆", "set.ttsSub": "使用您设备内置的语音引擎。",
     "set.rate": "语速", "set.pitch": "音调",
+    "set.voice2": "此角色的语音", "set.voice2Sub": "「自动」会挑选与台上同志性别相符、音质最佳的系统语音。", "set.auto": "自动——跟随角色", "set.preview": "试听语音", "set.warmth": "音色（音调）", "set.pace": "语速",
     "set.hakvoice": "客家话语音替代方案",
     "set.hakvoiceSub": "浏览器没有客家话语音。客家话会以最接近的中文语音朗读，并始终显示白话字拼音。",
     "set.diag": "诊断", "set.run": "运行自检", "set.reset": "重置对话",
@@ -867,6 +881,7 @@ const UI = {
     "set.physics": "头那毛㧯衫裤物理", "set.physicsSub": "对发丝㧯衫摆做 Verlet 模拟。",
     "set.voice": "声音", "set.tts": "读出回覆", "set.ttsSub": "用你设备内底个语音引擎。",
     "set.rate": "讲话快慢", "set.pitch": "声调高低",
+    "set.voice2": "这只角色个声音", "set.voice2Sub": "「自动」会拣同台顶个同志相合、声最好个系统语音。", "set.auto": "自动——跟等角色", "set.preview": "试听声音", "set.warmth": "声色（音调）", "set.pace": "讲话快慢",
     "set.hakvoice": "客家话声音替代",
     "set.hakvoiceSub": "浏览器无客家话声音。客家话会用最相近个中文声音读出，并且一定显示白话字。",
     "set.diag": "诊断", "set.run": "行自检", "set.reset": "重设讲话",
@@ -2262,7 +2277,7 @@ const Character = (function () {
       locks.push({ c: makeStrand(-78, -262, 5, 18, -0.24, 1, 1.20, 0.88), w:16 });
       locks.push({ c: makeStrand( 78, -262, 5, 18,  0.24, 1, 1.20, 0.88), w:16 });
       locks.push({ c: makeStrand(-16, -318, 4, 16,  0.90, -0.35, 0.35, 0.87), w:11 });
-      hem = makeCloth(0, 96, 202, 9, 5, 44, 1.30, 0.92);
+      hem = makeCloth(0, 150, 214, 9, 5, 46, 1.30, 0.92);
     }
   }
 
@@ -2379,6 +2394,7 @@ const Character = (function () {
     if (bad) { physAcc = 0; build(built, true); }
   }
 
+
   /* ------------------------- drawing primitives ------------------------- */
   function rrect(x, y, w, h, r) {
     const rr = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
@@ -2389,6 +2405,17 @@ const Character = (function () {
     ctx.arcTo(x, y + h, x, y, rr);
     ctx.arcTo(x, y, x + w, y, rr);
     ctx.closePath();
+  }
+  function lin(x0, y0, x1, y1, stops) {
+    const g = ctx.createLinearGradient(x0, y0, x1, y1);
+    for (const s of stops) g.addColorStop(s[0], s[1]);
+    return g;
+  }
+  function rad(x, y, r0, r1, stops, x1, y1) {
+    const g = ctx.createRadialGradient(x, y, r0, x1 === undefined ? x : x1,
+                                       y1 === undefined ? y : y1, r1);
+    for (const s of stops) g.addColorStop(s[0], s[1]);
+    return g;
   }
   /** Smooth tapered ribbon along a polyline, pointed at the tip. */
   function ribbon(pts, w) {
@@ -2414,6 +2441,35 @@ const Character = (function () {
     ctx.lineTo(R[0][0], R[0][1]);
     ctx.closePath();
   }
+  /** A soft crease in fabric: dark on one side of the line, lit on the other. */
+  /** A soft fabric fold: a feathered shadow line with a lit edge beside it. */
+  function crease(x1, y1, x2, y2, w, dark, light) {
+    const dx = x2 - x1, dy = y2 - y1, d = Math.hypot(dx, dy) || 1;
+    const nx = -dy / d, ny = dx / d;
+    const da = parseFloat(dark), la = parseFloat(light);
+    // a gentle bow so folds are not perfectly straight
+    const cx = (x1 + x2) / 2 + nx * w * 0.55, cy = (y1 + y2) / 2 + ny * w * 0.55;
+    ctx.save();
+    ctx.lineCap = "round";
+    // three passes of decreasing width fake a soft shadow without a blur filter
+    for (let i = 0; i < 3; i++) {
+      const k = 1 - i * 0.33;
+      ctx.strokeStyle = "rgba(14,22,48," + (da * (0.2 + i * 0.17)).toFixed(3) + ")";
+      ctx.lineWidth = Math.max(1, w * 1.4 * k);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(cx, cy, x2, y2); ctx.stroke();
+    }
+    if (la > 0.001) {
+      ctx.strokeStyle = "rgba(255,255,255," + (la * 0.55).toFixed(3) + ")";
+      ctx.lineWidth = Math.max(1, w * 0.6);
+      ctx.beginPath();
+      ctx.moveTo(x1 + nx * w * 1.05, y1 + ny * w * 1.05);
+      ctx.quadraticCurveTo(cx + nx * w * 0.5, cy + ny * w * 0.5,
+                           x2 + nx * w * 1.05, y2 + ny * w * 1.05);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   /** Deterministic blue rosettes; call inside a clip. */
   function floral(x0, y0, x1, y1, seed, density) {
     const r = mulberry32(seed);
@@ -2443,14 +2499,30 @@ const Character = (function () {
   const HEAD_Y = -212;
   const SHOULDER = -66;
   const HIP = 356;
+  const WAIST = 34;
 
-  function torsoPath(half, br) {
+  /** Torso silhouette with a real waist, so garments read as worn, not tubular. */
+  function torsoPath(half, br, waistK) {
+    const wh = half * (waistK === undefined ? 0.87 : waistK);
     ctx.beginPath();
     ctx.moveTo(-half - br * 0.4, HIP);
-    ctx.quadraticCurveTo(-half - 2, SHOULDER + 62, -half + 32, SHOULDER + 10);
-    ctx.quadraticCurveTo(-56, SHOULDER - 18, 0, SHOULDER - 22);
-    ctx.quadraticCurveTo(56, SHOULDER - 18, half - 32, SHOULDER + 10);
-    ctx.quadraticCurveTo(half + 2, SHOULDER + 62, half + br * 0.4, HIP);
+    ctx.quadraticCurveTo(-wh - 10, WAIST + 78, -wh, WAIST);
+    ctx.quadraticCurveTo(-half + 4, SHOULDER + 48, -half + 30, SHOULDER + 10);
+    ctx.quadraticCurveTo(-54, SHOULDER - 18, 0, SHOULDER - 22);
+    ctx.quadraticCurveTo(54, SHOULDER - 18, half - 30, SHOULDER + 10);
+    ctx.quadraticCurveTo(half - 4, SHOULDER + 48, wh, WAIST);
+    ctx.quadraticCurveTo(wh + 10, WAIST + 78, half + br * 0.4, HIP);
+    ctx.closePath();
+  }
+  /** Right-hand sleeve, tapering from shoulder to cuff. Mirror for the left. */
+  const CUFF_Y = 214;                     // three-quarter sleeve ends here
+  function armPath(half) {
+    const sx = half - 12, wx = half + 4;
+    ctx.beginPath();
+    ctx.moveTo(sx - 26, SHOULDER + 4);
+    ctx.quadraticCurveTo(sx + 24, SHOULDER + 34, wx + 17, CUFF_Y - 10);
+    ctx.quadraticCurveTo(wx + 2, CUFF_Y + 12, wx - 17, CUFF_Y - 6);
+    ctx.quadraticCurveTo(sx - 12, SHOULDER + 56, sx - 28, SHOULDER + 14);
     ctx.closePath();
   }
   function facePath() {
@@ -2470,144 +2542,183 @@ const Character = (function () {
     ctx.closePath();
   }
 
-  /* ------------------------------- body --------------------------------- */
+  /* -------------------------------- body -------------------------------- */
   function drawBody(kind) {
     const br = P.breathe;
     const half = kind === "female" ? 100 : 112;
     const HAIR = kind === "female" ? PAL.hairF : PAL.hairM;
+    const HAIRHI = kind === "female" ? PAL.hairFHi : PAL.hairMHi;
 
     /* 1 — physics locks and scarf tails sit furthest back */
     for (const s of locks) {
-      ctx.fillStyle = HAIR; ribbon(s.c.pts, s.w); ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,.06)"; ribbon(s.c.pts, s.w * 0.42); ctx.fill();
+      const p0 = s.c.pts[0], pn = s.c.pts[s.c.pts.length - 1];
+      ctx.fillStyle = lin(p0.x, p0.y, pn.x, pn.y,
+        [[0, kind === "female" ? PAL.hairFDeep : "#171316"], [0.55, HAIR], [1, HAIRHI]]);
+      ribbon(s.c.pts, s.w); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.07)"; ribbon(s.c.pts, s.w * 0.38); ctx.fill();
     }
     if (kind === "female") for (const s of tails) {
       ctx.save(); ribbon(s.c.pts, s.w);
       ctx.fillStyle = PAL.cloth; ctx.fill(); ctx.clip();
       floral(-240, -340, 240, 160, 4242, 2.4);
+      const p0 = s.c.pts[0], pn = s.c.pts[s.c.pts.length - 1];
+      ctx.fillStyle = lin(p0.x - 14, 0, p0.x + 14, 0,
+        [[0, "rgba(30,60,120,.28)"], [.5, "rgba(255,255,255,0)"], [1, "rgba(30,60,120,.28)"]]);
+      ctx.fillRect(-260, -360, 520, 560);
       ctx.restore();
       ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 2; ribbon(s.c.pts, s.w); ctx.stroke();
     }
 
     /* 2 — hair mass behind the head and shoulders */
-    ctx.fillStyle = HAIR;
-    ctx.beginPath();
-    ctx.ellipse(P.yaw * 18, HEAD_Y - 22 - P.pitch * 8,
-                kind === "female" ? 108 : 95, kind === "female" ? 125 : 108, P.roll, 0, TAU);
-    ctx.fill();
+    const mx = P.yaw * 18, my = HEAD_Y - 22 - P.pitch * 8;
+    const mrx = kind === "female" ? 108 : 95, mry = kind === "female" ? 125 : 108;
+    ctx.fillStyle = rad(mx - mrx * .35, my - mry * .5, 6, mrx * 2,
+      [[0, HAIRHI], [.45, HAIR], [1, kind === "female" ? PAL.hairFDeep : "#141013"]]);
+    ctx.beginPath(); ctx.ellipse(mx, my, mrx, mry, P.roll, 0, TAU); ctx.fill();
     if (kind === "female") {
       ctx.beginPath();
       ctx.moveTo(-92 + P.yaw * 16, HEAD_Y - 6);
       ctx.quadraticCurveTo(-110 + P.yaw * 12, HEAD_Y + 130, -76, HEAD_Y + 240);
       ctx.lineTo(76, HEAD_Y + 240);
       ctx.quadraticCurveTo(110 + P.yaw * 12, HEAD_Y + 130, 92 + P.yaw * 16, HEAD_Y - 6);
-      ctx.closePath(); ctx.fill();
+      ctx.closePath();
+      ctx.fillStyle = lin(-100, HEAD_Y, 100, HEAD_Y + 240,
+        [[0, HAIR], [.5, HAIRHI], [1, PAL.hairFDeep]]);
+      ctx.fill();
     }
 
-    /* 3 — neck */
-    ctx.fillStyle = PAL.skinSh;
+    /* 3 — neck, with the head's shadow falling across it */
+    ctx.fillStyle = lin(0, HEAD_Y + 84, 0, HEAD_Y + 138, [[0, PAL.skinDeep], [1, PAL.skinSh]]);
     rrect(-22 + P.yaw * 13, HEAD_Y + 84, 44, 54, 14); ctx.fill();
-    ctx.fillStyle = "rgba(150,90,70,.20)";
-    ctx.beginPath(); ctx.ellipse(P.yaw * 13, HEAD_Y + 94, 30, 12, 0, 0, Math.PI); ctx.fill();
+    ctx.fillStyle = rad(P.yaw * 13, HEAD_Y + 84, 4, 40,
+      [[0, "rgba(120,66,50,.42)"], [1, "rgba(120,66,50,0)"]]);
+    ctx.beginPath(); ctx.ellipse(P.yaw * 13, HEAD_Y + 90, 34, 20, 0, 0, TAU); ctx.fill();
 
     /* 4 — costume */
     if (kind === "female") femaleOutfit(half, br);
     else                   maleOutfit(half, br);
   }
 
-  function sleeves(half, dark, cuff) {
+  /** Sleeves drawn behind the torso, with elbow wrinkles and a cuff band. */
+  function sleeves(half, body, shade, cuff, edge) {
     for (const dir of [-1, 1]) {
       ctx.save();
-      ctx.translate(dir * (half - 14), SHOULDER + 34);
-      ctx.rotate(dir * 0.05);
-      ctx.fillStyle = dark;
-      rrect(-21, 0, 42, HIP - SHOULDER - 40, 20); ctx.fill();
-      ctx.strokeStyle = cuff; ctx.lineWidth = 4;
-      rrect(-21, 0, 42, HIP - SHOULDER - 40, 20); ctx.stroke();
+      ctx.scale(dir, 1);
+      armPath(half);
+      ctx.fillStyle = lin(half - 34, 0, half + 24, 0, [[0, shade], [.45, body], [1, shade]]);
+      ctx.fill();
+      ctx.save(); armPath(half); ctx.clip();
+      crease(half - 6, SHOULDER + 24, half + 4, CUFF_Y - 20, 7, ".13", ".06");
+      crease(half + 14, SHOULDER + 48, half + 17, CUFF_Y - 16, 5, ".10", ".05");
+      // wrinkles where the elbow bends
+      ctx.strokeStyle = "rgba(12,20,44,.14)"; ctx.lineWidth = 3; ctx.lineCap = "round";
+      for (let i = 0; i < 3; i++) {
+        const y = 96 + i * 16;
+        ctx.beginPath();
+        ctx.moveTo(half - 16 + i, y);
+        ctx.quadraticCurveTo(half + 2, y + 7 - i * 2, half + 18, y + 1);
+        ctx.stroke();
+      }
+      // cuff band
       ctx.fillStyle = cuff;
-      rrect(-21, HIP - SHOULDER - 88, 42, 24, 9); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(half - 22, CUFF_Y - 40);
+      ctx.quadraticCurveTo(half, CUFF_Y - 32, half + 24, CUFF_Y - 42);
+      ctx.lineTo(half + 26, CUFF_Y - 12);
+      ctx.quadraticCurveTo(half, CUFF_Y - 2, half - 24, CUFF_Y - 10);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = edge || shade; ctx.lineWidth = 3.4; armPath(half); ctx.stroke();
       ctx.restore();
     }
   }
 
   function femaleOutfit(half, br) {
-    /* sleeves behind the torso */
-    sleeves(half, "#eef3fd", PAL.blueDeep);
-
-    /* blouse */
+    /* --- blouse --- */
     ctx.save();
     torsoPath(half, br); ctx.clip();
-    ctx.fillStyle = PAL.cloth;
-    ctx.fillRect(-half - 30, SHOULDER - 40, (half + 30) * 2, HIP - SHOULDER + 60);
-    const g = ctx.createLinearGradient(-half, 0, half, 0);
-    g.addColorStop(0, "rgba(110,145,200,.34)"); g.addColorStop(.34, "rgba(255,255,255,0)");
-    g.addColorStop(.68, "rgba(255,255,255,0)"); g.addColorStop(1, "rgba(110,145,200,.34)");
-    ctx.fillStyle = g; ctx.fillRect(-half - 30, SHOULDER - 40, (half + 30) * 2, HIP - SHOULDER + 60);
+    ctx.fillStyle = lin(-half, SHOULDER, half, HIP,
+      [[0, "#dbe4f7"], [.32, "#ffffff"], [.62, "#f4f7ff"], [1, "#cfdaf1"]]);
+    ctx.fillRect(-half - 40, SHOULDER - 50, (half + 40) * 2, HIP - SHOULDER + 80);
+    // chest volume
+    ctx.fillStyle = rad(-26, SHOULDER + 66, 4, 96,
+      [[0, "rgba(255,255,255,.5)"], [1, "rgba(255,255,255,0)"]]);
+    ctx.fillRect(-half - 40, SHOULDER - 50, (half + 40) * 2, 220);
     floral(-half - 30, SHOULDER - 34, half + 30, 150, 12345, 1.2);
+    // soft folds gathering at the waist
+    crease(-52, SHOULDER + 24, -34, WAIST + 6, 9, ".11", ".05");
+    crease( 20, SHOULDER + 40,  32, WAIST + 4, 8, ".09", ".04");
+    crease(-8,  SHOULDER + 76,  -2, WAIST - 2, 6, ".07", ".03");
 
     /* blue trousers below the waist */
-    ctx.fillStyle = PAL.blueDeep;
-    ctx.fillRect(-half - 30, 118, (half + 30) * 2, HIP - 100);
-    ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(0, 250); ctx.lineTo(0, HIP); ctx.stroke();
+    ctx.fillStyle = lin(-half, 0, half, 0,
+      [[0, "#173d8d"], [.42, PAL.blueDeep], [.62, "#2255bd"], [1, "#153680"]]);
+    ctx.fillRect(-half - 40, 118, (half + 40) * 2, HIP - 100);
+    crease(-30, 150, -34, HIP, 9, ".18", ".05");
+    crease( 34, 156,  38, HIP, 8, ".16", ".04");
+    ctx.strokeStyle = "rgba(0,0,0,.28)"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(0, 240); ctx.lineTo(0, HIP); ctx.stroke();
 
     /* diagonal closure 斜襟 + frog buttons 盘扣 */
     ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 5;
     ctx.beginPath();
     ctx.moveTo(-4 + P.yaw * 8, SHOULDER - 8);
-    ctx.quadraticCurveTo(38 + P.yaw * 6, SHOULDER + 22, 54 + P.yaw * 4, SHOULDER + 86);
-    ctx.lineTo(54 + P.yaw * 4, HIP); ctx.stroke();
+    ctx.quadraticCurveTo(36 + P.yaw * 6, SHOULDER + 22, 50 + P.yaw * 4, SHOULDER + 86);
+    ctx.lineTo(48 + P.yaw * 4, WAIST + 4); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-7 + P.yaw * 8, SHOULDER - 8);
+    ctx.quadraticCurveTo(33 + P.yaw * 6, SHOULDER + 22, 47 + P.yaw * 4, SHOULDER + 86);
+    ctx.stroke();
     ctx.fillStyle = PAL.blueDeep;
     for (let i = 0; i < 3; i++) {
-      const yy = SHOULDER + 40 + i * 30, xx = 48 + P.yaw * 5;
-      ctx.beginPath(); ctx.arc(xx, yy, 3.6, 0, TAU); ctx.fill();
+      const yy = SHOULDER + 40 + i * 30, xx = 44 + P.yaw * 5;
+      ctx.beginPath(); ctx.arc(xx, yy, 3.4, 0, TAU); ctx.fill();
       ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 2.2;
       ctx.beginPath(); ctx.moveTo(xx - 11, yy - 3.5); ctx.quadraticCurveTo(xx - 3, yy, xx - 11, yy + 3.5); ctx.stroke();
     }
     ctx.restore();
-    ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 5;
+
+    /* blouse edge, lighter on the lit side */
+    ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 4.5;
     torsoPath(half, br); ctx.stroke();
 
-    /* apron with simulated hem */
-    apron(PAL.blue, PAL.cloth, 5);
+    /* --- apron with simulated hem --- */
+    apron("#2f6fe0", "#1b47a8", "#e8eefc", 3.5);
 
-    /* waistband */
+    /* waistband, tucked inside the silhouette */
     ctx.save(); torsoPath(half, br); ctx.clip();
-    ctx.fillStyle = PAL.cloth;
-    ctx.fillRect(-half - 20, 64, (half + 20) * 2, 15);
-    ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 2.2;
-    ctx.beginPath(); ctx.moveTo(-half - 20, 64.5); ctx.lineTo(half + 20, 64.5);
-    ctx.moveTo(-half - 20, 78.5); ctx.lineTo(half + 20, 78.5); ctx.stroke();
+    ctx.fillStyle = lin(0, 62, 0, 80, [[0, "#ffffff"], [1, "#dbe5f7"]]);
+    ctx.fillRect(-half - 20, 62, (half + 20) * 2, 17);
+    ctx.strokeStyle = "rgba(27,71,168,.55)"; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.moveTo(-half - 20, 62.5); ctx.lineTo(half + 20, 62.5);
+    ctx.moveTo(-half - 20, 79); ctx.lineTo(half + 20, 79); ctx.stroke();
     ctx.restore();
 
+    /* arms hang in front of the apron */
+    sleeves(half, "#f4f8ff", "#ccd9f0", PAL.blueDeep, PAL.blueDeep);
+
     /* mandarin collar */
-    ctx.fillStyle = PAL.blueDeep;
-    ctx.beginPath();
-    ctx.moveTo(-32 + P.yaw * 13, SHOULDER - 10);
-    ctx.quadraticCurveTo(P.yaw * 13, SHOULDER - 34, 32 + P.yaw * 13, SHOULDER - 10);
-    ctx.quadraticCurveTo(P.yaw * 13, SHOULDER + 8, -32 + P.yaw * 13, SHOULDER - 10);
-    ctx.closePath(); ctx.fill();
+    collar(PAL.blueDeep, "#4a80e6");
   }
 
   function maleOutfit(half, br) {
-    ctx.fillStyle = PAL.navyDeep;
-    rrect(-100, 150, 200, 212, 16); ctx.fill();
-
-    sleeves(half, PAL.navy, PAL.navyHi);
-
     ctx.save();
-    torsoPath(half, br); ctx.clip();
-    ctx.fillStyle = PAL.navy;
-    ctx.fillRect(-half - 30, SHOULDER - 40, (half + 30) * 2, HIP - SHOULDER + 60);
-    const g = ctx.createLinearGradient(-half, 0, half, 0);
-    g.addColorStop(0, "rgba(0,0,0,.34)"); g.addColorStop(.32, "rgba(130,165,225,.16)");
-    g.addColorStop(.72, "rgba(0,0,0,.06)"); g.addColorStop(1, "rgba(0,0,0,.34)");
-    ctx.fillStyle = g; ctx.fillRect(-half - 30, SHOULDER - 40, (half + 30) * 2, HIP - SHOULDER + 60);
+    torsoPath(half, br, 0.95); ctx.clip();
+    ctx.fillStyle = lin(-half, SHOULDER, half, HIP,
+      [[0, "#1b2647"], [.38, "#334572"], [.66, "#2b3a63"], [1, "#18213e"]]);
+    ctx.fillRect(-half - 40, SHOULDER - 50, (half + 40) * 2, HIP - SHOULDER + 80);
+    ctx.fillStyle = rad(-24, SHOULDER + 70, 4, 110,
+      [[0, "rgba(150,180,235,.20)"], [1, "rgba(150,180,235,0)"]]);
+    ctx.fillRect(-half - 40, SHOULDER - 50, (half + 40) * 2, 240);
+    crease(-46, SHOULDER + 26, -40, HIP, 10, ".24", ".05");
+    crease( 40, SHOULDER + 34,  46, HIP, 9, ".22", ".04");
+    crease(-12, SHOULDER + 90, -10, HIP, 7, ".13", ".03");
 
-    /* crane embroidery */
+    /* crane embroidery 仙鹤 */
     ctx.save();
-    ctx.translate(-48 + P.yaw * 8, SHOULDER + 66);
-    ctx.fillStyle = "#eef4ff";
+    ctx.translate(-46 + P.yaw * 8, SHOULDER + 68);
+    ctx.fillStyle = "#f2f7ff";
     ctx.beginPath();
     ctx.moveTo(0, 0); ctx.quadraticCurveTo(-6, -18, 6, -26);
     ctx.quadraticCurveTo(16, -32, 12, -20); ctx.quadraticCurveTo(9, -12, 14, -4);
@@ -2616,65 +2727,111 @@ const Character = (function () {
     ctx.fillStyle = PAL.blueLite;
     ctx.beginPath(); ctx.moveTo(4, -2); ctx.quadraticCurveTo(26, -15, 32, 2);
     ctx.quadraticCurveTo(18, 5, 4, -2); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(10, 12); ctx.lineTo(8, 22); ctx.moveTo(4, 12); ctx.lineTo(0, 21); ctx.stroke();
     ctx.fillStyle = "#d94b3a";
     ctx.beginPath(); ctx.arc(9, -27, 2.4, 0, TAU); ctx.fill();
+    ctx.fillStyle = "rgba(240,246,255,.9)";
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath(); ctx.ellipse(-16 - i * 7, 6 + i * 3, 3.6, 2.6, .5, 0, TAU); ctx.fill();
+    }
     ctx.restore();
 
     /* centre placket */
-    ctx.strokeStyle = PAL.navyDeep; ctx.lineWidth = 4;
+    ctx.strokeStyle = "#141c36"; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.moveTo(P.yaw * 10, SHOULDER - 8); ctx.lineTo(P.yaw * 6, HIP); ctx.stroke();
-    ctx.fillStyle = PAL.navyHi;
-    for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(P.yaw * 8, SHOULDER + 34 + i * 38, 4.6, 0, TAU); ctx.fill(); }
+    ctx.strokeStyle = "rgba(160,190,240,.28)"; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(P.yaw * 10 + 4, SHOULDER - 8); ctx.lineTo(P.yaw * 6 + 4, HIP); ctx.stroke();
+    for (let i = 0; i < 5; i++) {
+      const yy = SHOULDER + 34 + i * 38;
+      ctx.fillStyle = "#0f1730";
+      ctx.beginPath(); ctx.arc(P.yaw * 8, yy + 1.5, 5.4, 0, TAU); ctx.fill();
+      ctx.fillStyle = PAL.navyHi;
+      ctx.beginPath(); ctx.arc(P.yaw * 8, yy, 4.8, 0, TAU); ctx.fill();
+      ctx.fillStyle = "rgba(200,220,255,.5)";
+      ctx.beginPath(); ctx.arc(P.yaw * 8 - 1.6, yy - 1.6, 1.6, 0, TAU); ctx.fill();
+    }
     ctx.restore();
 
-    ctx.strokeStyle = PAL.navyDeep; ctx.lineWidth = 5;
-    torsoPath(half, br); ctx.stroke();
+    ctx.strokeStyle = "#141c36"; ctx.lineWidth = 4.5;
+    torsoPath(half, br, 0.95); ctx.stroke();
 
-    apron(PAL.navy, PAL.navyDeep, 4);
+    apron("#2b3a63", "#1b2647", "#141c36", 4, true);
+    sleeves(half, PAL.navy, PAL.navyDeep, PAL.navyHi, "#141c36");
+    collar(PAL.navyHi, "#6b86c4");
+  }
 
-    /* mandarin collar */
-    ctx.fillStyle = PAL.navyHi;
+  function collar(fill, hi) {
+    const x = P.yaw * 13;
+    ctx.fillStyle = fill;
     ctx.beginPath();
-    ctx.moveTo(-30 + P.yaw * 13, SHOULDER - 12);
-    ctx.quadraticCurveTo(P.yaw * 13, SHOULDER - 36, 30 + P.yaw * 13, SHOULDER - 12);
-    ctx.quadraticCurveTo(P.yaw * 13, SHOULDER + 6, -30 + P.yaw * 13, SHOULDER - 12);
+    ctx.moveTo(-32 + x, SHOULDER - 10);
+    ctx.quadraticCurveTo(x, SHOULDER - 36, 32 + x, SHOULDER - 10);
+    ctx.quadraticCurveTo(x, SHOULDER + 8, -32 + x, SHOULDER - 10);
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = PAL.navyDeep; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = hi; ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-28 + x, SHOULDER - 14);
+    ctx.quadraticCurveTo(x, SHOULDER - 34, 28 + x, SHOULDER - 14);
+    ctx.stroke();
+    // shadow the collar casts on the chest
+    ctx.fillStyle = rad(x, SHOULDER - 4, 4, 46, [[0, "rgba(10,20,45,.3)"], [1, "rgba(10,20,45,0)"]]);
+    ctx.beginPath(); ctx.ellipse(x, SHOULDER + 4, 46, 22, 0, 0, TAU); ctx.fill();
   }
 
   /** Skirt / robe panel whose lower edge is driven by the cloth simulation. */
-  function apron(fill, edge, lw) {
+  function apron(fill, deep, edge, lw, seamless) {
     const raw = hem.pts.slice((hem.rows - 1) * hem.cols);
-    const flare = 1.16;                       // an apron widens toward the hem
+    const flare = seamless ? 1.06 : 1.16;
     const bot = raw.map(p => ({ x: p.x * flare, y: p.y }));
-    ctx.beginPath();
-    ctx.moveTo(hem.pts[0].x, hem.pts[0].y);
-    ctx.lineTo(hem.pts[hem.cols - 1].x, hem.pts[hem.cols - 1].y);
-    ctx.lineTo(bot[bot.length - 1].x, bot[bot.length - 1].y);
-    for (let i = bot.length - 2; i >= 0; i--) {
-      const p = bot[i], q = bot[i + 1];
-      ctx.quadraticCurveTo((p.x + q.x) / 2, (p.y + q.y) / 2, p.x, p.y);
-    }
-    ctx.closePath();
-    ctx.fillStyle = fill; ctx.fill();
-    ctx.save(); ctx.clip();
-    const g = ctx.createLinearGradient(-hem.w / 2, 0, hem.w / 2, 0);
-    g.addColorStop(0, "rgba(0,0,0,.26)"); g.addColorStop(.42, "rgba(255,255,255,.12)");
-    g.addColorStop(1, "rgba(0,0,0,.26)");
-    ctx.fillStyle = g; ctx.fillRect(-200, hem.ay - 10, 400, 420);
-    // fold lines follow the simulated bottom edge
-    ctx.strokeStyle = "rgba(0,0,0,.16)"; ctx.lineWidth = 2;
-    for (let i = 2; i < bot.length - 1; i += 2) {
+    const top = [];
+    for (let c = 0; c < hem.cols; c++) top.push(hem.pts[c]);
+
+    const panelPath = () => {
       ctx.beginPath();
-      ctx.moveTo(hem.pts[i].x, hem.pts[i].y);
-      ctx.lineTo(bot[i].x, bot[i].y);
-      ctx.stroke();
+      ctx.moveTo(top[0].x, top[0].y);
+      ctx.lineTo(top[top.length - 1].x, top[top.length - 1].y);
+      ctx.lineTo(bot[bot.length - 1].x, bot[bot.length - 1].y);
+      for (let i = bot.length - 2; i >= 0; i--) {
+        const a = bot[i], b = bot[i + 1];
+        ctx.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2, a.x, a.y);
+      }
+      ctx.closePath();
+    };
+    const hemPath = () => {
+      ctx.beginPath();
+      ctx.moveTo(bot[bot.length - 1].x, bot[bot.length - 1].y);
+      for (let i = bot.length - 2; i >= 0; i--) {
+        const a = bot[i], b = bot[i + 1];
+        ctx.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2, a.x, a.y);
+      }
+    };
+
+    panelPath();
+    ctx.fillStyle = lin(-hem.w / 2, 0, hem.w / 2, 0,
+      [[0, deep], [.34, fill], [.58, fill], [1, deep]]);
+    ctx.fill();
+
+    ctx.save(); panelPath(); ctx.clip();
+    // pleats hang from the waist to the simulated hem, so they sway with it
+    for (let i = 1; i < hem.cols - 1; i += 1) {
+      const t = top[i], b = bot[i];
+      crease(t.x, t.y + 4, b.x, b.y, 6, ".22", ".02");
+    }
+    if (!seamless) {
+      ctx.fillStyle = lin(0, hem.ay, 0, hem.ay + 90,
+        [[0, "rgba(255,255,255,.16)"], [1, "rgba(255,255,255,0)"]]);
+      ctx.fillRect(-200, hem.ay - 6, 400, 120);
     }
     ctx.restore();
-    ctx.strokeStyle = edge; ctx.lineWidth = lw; ctx.lineJoin = "round"; ctx.stroke();
+
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = edge; ctx.lineWidth = lw;
+    if (seamless) { hemPath(); ctx.stroke(); }      // only the hem reads as an edge
+    else { panelPath(); ctx.stroke(); }
   }
 
-  /* ------------------------------- head --------------------------------- */
+  /* -------------------------------- head -------------------------------- */
   function drawHead(kind) {
     const hp = headPos();
     ctx.save();
@@ -2687,21 +2844,32 @@ const Character = (function () {
     ctx.fillStyle = PAL.skinSh;
     ctx.beginPath(); ctx.ellipse(-74 + fx * .3, 16, 11, 19, -0.18, 0, TAU); ctx.fill();
     ctx.beginPath(); ctx.ellipse( 74 + fx * .3, 16, 11, 19,  0.18, 0, TAU); ctx.fill();
+    ctx.strokeStyle = "rgba(190,130,105,.6)"; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.arc(-73 + fx * .3, 16, 5.5, -1.1, 1.6); ctx.stroke();
+    ctx.beginPath(); ctx.arc( 73 + fx * .3, 16, 5.5, Math.PI - 1.6, Math.PI + 1.1); ctx.stroke();
 
-    /* face */
-    ctx.fillStyle = PAL.skin; facePath(); ctx.fill();
-    const fg = ctx.createLinearGradient(0, -70, 0, 96);
-    fg.addColorStop(0, "rgba(255,255,255,.18)");
-    fg.addColorStop(.55, "rgba(255,255,255,0)");
-    fg.addColorStop(1, "rgba(212,142,116,.30)");
-    ctx.fillStyle = fg; facePath(); ctx.fill();
+    /* face with soft modelling */
+    ctx.save(); facePath(); ctx.clip();
+    ctx.fillStyle = PAL.skin;
+    ctx.fillRect(-90, -110, 180, 220);
+    ctx.fillStyle = rad(-26, -14, 6, 110, [[0, "rgba(255,246,236,.85)"], [1, "rgba(255,246,236,0)"]]);
+    ctx.fillRect(-90, -110, 180, 220);
+    ctx.fillStyle = lin(0, 30, 0, 96, [[0, "rgba(214,142,112,0)"], [1, "rgba(206,128,100,.38)"]]);
+    ctx.fillRect(-90, 20, 180, 90);
+    ctx.fillStyle = lin(60, 0, 80, 0, [[0, "rgba(196,124,98,0)"], [1, "rgba(196,124,98,.32)"]]);
+    ctx.fillRect(56, -110, 40, 220);
+    // shadow cast by the fringe
+    ctx.fillStyle = lin(0, -60, 0, 6, [[0, "rgba(120,72,58,.34)"], [1, "rgba(120,72,58,0)"]]);
+    ctx.fillRect(-90, -60, 180, 70);
+    ctx.restore();
 
     /* blush */
     if (P.blush > 0.02) {
       ctx.globalAlpha = P.blush;
-      ctx.fillStyle = "rgba(240,138,128,.55)";
-      ctx.beginPath(); ctx.ellipse(-44 + fx, 40, 19, 10, -0.12, 0, TAU); ctx.fill();
-      ctx.beginPath(); ctx.ellipse( 44 + fx, 40, 19, 10,  0.12, 0, TAU); ctx.fill();
+      ctx.fillStyle = rad(-44 + fx, 40, 2, 22, [[0, "rgba(242,132,124,.75)"], [1, "rgba(242,132,124,0)"]]);
+      ctx.beginPath(); ctx.ellipse(-44 + fx, 40, 22, 12, -0.12, 0, TAU); ctx.fill();
+      ctx.fillStyle = rad( 44 + fx, 40, 2, 22, [[0, "rgba(242,132,124,.75)"], [1, "rgba(242,132,124,0)"]]);
+      ctx.beginPath(); ctx.ellipse( 44 + fx, 40, 22, 12,  0.12, 0, TAU); ctx.fill();
       ctx.globalAlpha = 1;
     }
 
@@ -2709,17 +2877,17 @@ const Character = (function () {
     drawEye( 31 + fx, 18,  1, kind);
 
     /* nose */
-    ctx.strokeStyle = "rgba(196,132,108,.8)"; ctx.lineWidth = 2.2; ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(190,124,100,.75)"; ctx.lineWidth = 2.1; ctx.lineCap = "round";
     ctx.beginPath();
     ctx.moveTo(2 + fx * 1.05, 42); ctx.quadraticCurveTo(7 + fx * 1.05, 48, 0 + fx * 1.05, 50);
     ctx.stroke();
 
-    drawMouth(fx * 1.05, 66);
+    drawMouth(fx * 1.05, 66, kind);
 
     /* hair, then brows painted over the fringe (standard anime convention) */
     if (kind === "female") femaleHair(fx); else maleHair(fx);
-    drawBrow(-31 + fx, -14, -1, kind);
-    drawBrow( 31 + fx, -14,  1, kind);
+    drawBrow(-31 + fx, -26, -1, kind);
+    drawBrow( 31 + fx, -26,  1, kind);
 
     ctx.restore();
     if (kind === "female") drawScarf(hp);
@@ -2728,41 +2896,57 @@ const Character = (function () {
   function drawEye(x, y, side, kind) {
     const open = clamp(P.eyeOpen * (1 - P.blink), 0.035, 1.35);
     const w = kind === "female" ? 24 : 22.5, h = (kind === "female" ? 23 : 21) * open;
+
+    /* socket shadow */
+    ctx.fillStyle = rad(x, y - h * 0.5, 2, w * 1.5,
+      [[0, "rgba(180,124,104,.25)"], [1, "rgba(180,124,104,0)"]]);
+    ctx.beginPath(); ctx.ellipse(x, y - h * 0.3, w * 1.35, h * 1.25, 0, 0, TAU); ctx.fill();
+
     ctx.save();
     eyePath(x, y, w, h); ctx.clip();
-
-    ctx.fillStyle = "#fdfbff"; ctx.fillRect(x - w - 2, y - h * 2, w * 2 + 4, h * 4);
-    ctx.fillStyle = "rgba(150,162,205,.30)";
-    ctx.fillRect(x - w - 2, y - h * 2, w * 2 + 4, h * 2.1);
+    ctx.fillStyle = lin(0, y - h, 0, y + h, [[0, "#d9dcec"], [.45, "#fdfbff"], [1, "#f2f1f8"]]);
+    ctx.fillRect(x - w - 2, y - h * 2, w * 2 + 4, h * 4);
 
     const ix = x + P.eyeX * 6, iy = y + P.eyeY * 4.5 + 1, ir = kind === "female" ? 14.6 : 13.4;
-    const ig = ctx.createRadialGradient(ix, iy - 4, 1.5, ix, iy, ir);
-    ig.addColorStop(0, PAL.irisHi);
-    ig.addColorStop(.5, kind === "female" ? PAL.iris : PAL.irisM);
-    ig.addColorStop(1, "#1c110d");
-    ctx.fillStyle = ig;
+    // iris: darker rim, lit lower half
+    ctx.fillStyle = rad(ix, iy - ir * .45, 1.5, ir * 1.05,
+      [[0, PAL.irisHi], [.42, kind === "female" ? PAL.iris : PAL.irisM], [1, "#1a100c"]]);
     ctx.beginPath(); ctx.arc(ix, iy, ir, 0, TAU); ctx.fill();
-    ctx.strokeStyle = "rgba(26,14,10,.6)"; ctx.lineWidth = 2;
+    // radial fibres
+    ctx.strokeStyle = "rgba(255,210,160,.22)"; ctx.lineWidth = 1.1;
+    for (let i = 0; i < 12; i++) {
+      const a = i * TAU / 12 + 0.2;
+      ctx.beginPath();
+      ctx.moveTo(ix + Math.cos(a) * ir * 0.42, iy + Math.sin(a) * ir * 0.42);
+      ctx.lineTo(ix + Math.cos(a) * ir * 0.92, iy + Math.sin(a) * ir * 0.92);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = "rgba(24,12,8,.62)"; ctx.lineWidth = 2.4;
     ctx.beginPath(); ctx.arc(ix, iy, ir, 0, TAU); ctx.stroke();
-    ctx.fillStyle = "#140d0b";
+    ctx.fillStyle = "#130c0a";
     ctx.beginPath(); ctx.arc(ix, iy, 6.4, 0, TAU); ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,.96)";
-    ctx.beginPath(); ctx.ellipse(ix - 5.2, iy - 6.4, 4.6, 5.4, -0.4, 0, TAU); ctx.fill();
-    ctx.globalAlpha = .65;
-    ctx.beginPath(); ctx.arc(ix + 5, iy + 4.6, 2.3, 0, TAU); ctx.fill();
-    ctx.globalAlpha = .3;
-    ctx.beginPath(); ctx.ellipse(ix, iy + 8, 7.5, 3, 0, 0, TAU); ctx.fill();
+    // catchlights
+    ctx.fillStyle = "rgba(255,255,255,.97)";
+    ctx.beginPath(); ctx.ellipse(ix - 5.2, iy - 6.4, 4.8, 5.6, -0.4, 0, TAU); ctx.fill();
+    ctx.globalAlpha = .7;
+    ctx.beginPath(); ctx.arc(ix + 5.4, iy + 5, 2.5, 0, TAU); ctx.fill();
+    ctx.globalAlpha = .34;
+    ctx.beginPath(); ctx.ellipse(ix, iy + 8.5, 8, 3.2, 0, 0, TAU); ctx.fill();
     ctx.globalAlpha = 1;
+    // shadow cast by the upper lid
+    ctx.fillStyle = lin(0, y - h * 1.1, 0, y - h * 0.1,
+      [[0, "rgba(70,40,34,.5)"], [1, "rgba(70,40,34,0)"]]);
+    ctx.fillRect(x - w - 2, y - h * 1.3, w * 2 + 4, h * 1.25);
     ctx.restore();
 
-    /* soft lower rim only */
-    ctx.strokeStyle = "rgba(150,108,96,.35)"; ctx.lineWidth = 1.4;
+    /* lower rim */
+    ctx.strokeStyle = "rgba(150,104,92,.4)"; ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(x - w * 0.9, y + h * 0.5);
     ctx.bezierCurveTo(x - w * 0.55, y + h * 1.02, x + w * 0.55, y + h * 1.02, x + w * 0.9, y + h * 0.46);
     ctx.stroke();
 
-    /* upper lash */
+    /* upper lash, hugging the eye */
     ctx.strokeStyle = PAL.line;
     ctx.lineWidth = kind === "female" ? 5 : 4;
     ctx.lineCap = "round";
@@ -2776,7 +2960,23 @@ const Character = (function () {
       ctx.moveTo(x + side * w * 0.88, y - h * 0.28);
       ctx.quadraticCurveTo(x + side * (w + 3), y - h * 0.62, x + side * (w + 5.5), y - h * 0.92);
       ctx.stroke();
+      // lash cluster
+      ctx.lineWidth = 1.8;
+      for (let i = 0; i < 2; i++) {
+        const t = 0.55 + i * 0.2;
+        const px = x + side * w * t, py = y - h * (0.9 - i * 0.12);
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + side * 5, py - 5 - i);
+        ctx.stroke();
+      }
     }
+    /* eyelid crease */
+    ctx.strokeStyle = "rgba(150,104,92,.42)"; ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(x - w * 0.78, y - h * 1.02);
+    ctx.quadraticCurveTo(x, y - h * 1.62, x + w * 0.8, y - h * 0.98);
+    ctx.stroke();
   }
 
   function drawBrow(x, y, side, kind) {
@@ -2784,21 +2984,27 @@ const Character = (function () {
     ctx.save();
     ctx.translate(x, y - raise);
     ctx.rotate(P.browAngle * side * 0.45);
-    ctx.strokeStyle = kind === "female" ? "#54372f" : "#3d2a24";
+    ctx.strokeStyle = kind === "female" ? "#5b3b32" : "#3f2b25";
     ctx.lineWidth = 3.6; ctx.lineCap = "round";
     ctx.beginPath();
     ctx.moveTo(-side * 15, 3.5);
     ctx.quadraticCurveTo(0, -4.5 - P.browRaise * 3, side * 14, 0);
     ctx.stroke();
+    ctx.strokeStyle = kind === "female" ? "rgba(120,80,66,.5)" : "rgba(90,64,52,.5)";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-side * 13, 6);
+    ctx.quadraticCurveTo(0, -1.5 - P.browRaise * 3, side * 12, 2.5);
+    ctx.stroke();
     ctx.restore();
   }
 
-  function drawMouth(x, y) {
+  function drawMouth(x, y, kind) {
     const open = P.mouthOpen, wide = 1 + P.mouthWide * 0.5, curve = P.mouthCurve;
-    const w = 16 * wide, h = 2.2 + open * 14;
+    const w = (kind === "female" ? 16 : 17) * wide, h = 2.2 + open * 14;
     ctx.save(); ctx.translate(x, y);
     if (open > 0.06) {
-      ctx.fillStyle = "#7c2f34";
+      ctx.fillStyle = "#71272d";
       ctx.beginPath();
       ctx.moveTo(-w, 0);
       ctx.quadraticCurveTo(0, -curve * 4 - 2, w, 0);
@@ -2807,73 +3013,99 @@ const Character = (function () {
       ctx.fillStyle = "#c4585e";
       ctx.beginPath(); ctx.ellipse(0, h * 0.95, w * 0.58, h * 0.5, 0, 0, Math.PI); ctx.fill();
       if (open > 0.42) {
-        ctx.fillStyle = "#fff8f5";
+        ctx.fillStyle = "#fff9f6";
         ctx.beginPath();
         ctx.moveTo(-w * 0.8, -1);
         ctx.quadraticCurveTo(0, -curve * 3 - 1, w * 0.8, -1);
         ctx.lineTo(w * 0.68, 3); ctx.quadraticCurveTo(0, 4.4, -w * 0.68, 3);
         ctx.closePath(); ctx.fill();
       }
+    } else if (kind === "female") {
+      // soft resting lip colour
+      ctx.fillStyle = "rgba(216,116,111,.55)";
+      ctx.beginPath();
+      ctx.moveTo(-w, 0);
+      ctx.quadraticCurveTo(0, curve * 8 + 4.5, w, 0);
+      ctx.quadraticCurveTo(0, curve * 8 - 2.5, -w, 0);
+      ctx.closePath(); ctx.fill();
     }
-    ctx.strokeStyle = PAL.lipDark; ctx.lineWidth = 3; ctx.lineCap = "round";
+    ctx.strokeStyle = PAL.lipDark; ctx.lineWidth = 2.8; ctx.lineCap = "round";
     ctx.beginPath();
     ctx.moveTo(-w, 0); ctx.quadraticCurveTo(0, curve * 8 + open * 4, w, 0);
     ctx.stroke();
     if (curve > 0.45) {
-      ctx.lineWidth = 1.9;
+      ctx.lineWidth = 1.8;
       ctx.beginPath(); ctx.moveTo(-w - 2.5, -2); ctx.lineTo(-w + 1.5, 1); ctx.stroke();
       ctx.beginPath(); ctx.moveTo( w + 2.5, -2); ctx.lineTo( w - 1.5, 1); ctx.stroke();
     }
     ctx.restore();
   }
 
-  function femaleHair(fx) {
-    ctx.fillStyle = PAL.hairF;
-    /* cap + soft swept fringe, ending just above the eyes */
+  function capPathF() {
     ctx.beginPath();
     ctx.moveTo(-84, 12);
     ctx.bezierCurveTo(-92, -76, -50, -118, 0, -118);
     ctx.bezierCurveTo(50, -118, 92, -76, 84, 12);
-    ctx.quadraticCurveTo(84, -4, 62, -20);             // right temple
-    ctx.bezierCurveTo(28, -2, -24, -2, -60, -20);      // fringe dips over the brow
-    ctx.quadraticCurveTo(-84, -4, -84, 12);
-    ctx.closePath(); ctx.fill();
+    ctx.quadraticCurveTo(83, -8, 61, -20);
+    ctx.bezierCurveTo(26, -48, -24, -48, -59, -20);
+    ctx.quadraticCurveTo(-83, -8, -84, 12);
+    ctx.closePath();
+  }
+  function femaleHair(fx) {
+    capPathF();
+    ctx.fillStyle = lin(-70, -110, 60, 20,
+      [[0, PAL.hairFHi], [.34, PAL.hairF], [1, PAL.hairFDeep]]);
+    ctx.fill();
     /* face-framing side locks */
+    ctx.fillStyle = PAL.hairF;
     ctx.beginPath();
     ctx.moveTo(-82, -34); ctx.quadraticCurveTo(-96, 26, -78, 84);
     ctx.quadraticCurveTo(-66, 30, -64, -18); ctx.closePath(); ctx.fill();
     ctx.beginPath();
     ctx.moveTo(82, -34); ctx.quadraticCurveTo(96, 26, 78, 84);
     ctx.quadraticCurveTo(66, 30, 64, -18); ctx.closePath(); ctx.fill();
-    /* gloss */
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(-84, 12);
-    ctx.bezierCurveTo(-92, -76, -50, -118, 0, -118);
-    ctx.bezierCurveTo(50, -118, 92, -76, 84, 12);
-    ctx.lineTo(84, -122); ctx.lineTo(-84, -122); ctx.closePath();
-    ctx.clip();
-    ctx.globalAlpha = .42; ctx.lineCap = "round";
-    ctx.strokeStyle = PAL.hairFHi; ctx.lineWidth = 10;
-    ctx.beginPath(); ctx.moveTo(-50, -66); ctx.quadraticCurveTo(-16, -88, 18, -80); ctx.stroke();
-    ctx.globalAlpha = .24; ctx.lineWidth = 7;
-    ctx.beginPath(); ctx.moveTo(30, -74); ctx.quadraticCurveTo(52, -64, 62, -44); ctx.stroke();
-    ctx.globalAlpha = 1;
-    ctx.restore();
 
+    ctx.save(); capPathF(); ctx.clip();
+    /* individual strand shapes break up the flat cap */
+    ctx.fillStyle = "rgba(255,255,255,.05)";
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * 26 - 8, -116);
+      ctx.quadraticCurveTo(i * 30 + 12, -60, i * 22 + 4, -6);
+      ctx.quadraticCurveTo(i * 26 - 2, -62, i * 26 - 8, -116);
+      ctx.closePath(); ctx.fill();
+    }
+    /* glossy band */
+    ctx.globalAlpha = .5; ctx.lineCap = "round";
+    ctx.strokeStyle = PAL.hairFHi; ctx.lineWidth = 11;
+    ctx.beginPath(); ctx.moveTo(-52, -64); ctx.quadraticCurveTo(-16, -88, 20, -78); ctx.stroke();
+    ctx.globalAlpha = .26; ctx.lineWidth = 7;
+    ctx.beginPath(); ctx.moveTo(30, -72); ctx.quadraticCurveTo(52, -62, 62, -42); ctx.stroke();
+    ctx.globalAlpha = .18; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(-64, -46); ctx.quadraticCurveTo(-46, -58, -30, -56); ctx.stroke();
+    ctx.globalAlpha = 1;
+    /* darken the underside of the fringe */
+    ctx.fillStyle = lin(0, -46, 0, -6, [[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,.36)"]]);
+    ctx.fillRect(-90, -46, 180, 46);
+    ctx.restore();
   }
 
-  function maleHair(fx) {
-    ctx.fillStyle = PAL.hairM;
+  function capPathM() {
     ctx.beginPath();
     ctx.moveTo(-80, 6);
     ctx.bezierCurveTo(-88, -78, -48, -118, 0, -118);
     ctx.bezierCurveTo(48, -118, 88, -78, 80, 6);
-    ctx.quadraticCurveTo(80, -8, 58, -24);
-    ctx.bezierCurveTo(26, -8, -28, -6, -58, -26);
-    ctx.quadraticCurveTo(-78, -12, -80, 6);
-    ctx.closePath(); ctx.fill();
+    ctx.quadraticCurveTo(79, -12, 57, -24);
+    ctx.bezierCurveTo(24, -50, -28, -48, -58, -22);
+    ctx.quadraticCurveTo(-77, -10, -80, 6);
+    ctx.closePath();
+  }
+  function maleHair(fx) {
+    capPathM();
+    ctx.fillStyle = lin(-64, -110, 56, 14, [[0, PAL.hairMHi], [.36, PAL.hairM], [1, "#141013"]]);
+    ctx.fill();
     /* soft spikes along the crown */
+    ctx.fillStyle = PAL.hairM;
     for (let i = -3; i <= 3; i++) {
       const bx = i * 19;
       ctx.beginPath();
@@ -2882,16 +3114,15 @@ const Character = (function () {
       ctx.quadraticCurveTo(bx + 2, -86, bx - 13, -84);
       ctx.closePath(); ctx.fill();
     }
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(-80, 6);
-    ctx.bezierCurveTo(-88, -78, -48, -118, 0, -118);
-    ctx.bezierCurveTo(48, -118, 88, -78, 80, 6);
-    ctx.closePath(); ctx.clip();
-    ctx.globalAlpha = .38; ctx.lineCap = "round";
-    ctx.strokeStyle = PAL.hairMHi; ctx.lineWidth = 9;
-    ctx.beginPath(); ctx.moveTo(-44, -72); ctx.quadraticCurveTo(-12, -94, 22, -84); ctx.stroke();
+    ctx.save(); capPathM(); ctx.clip();
+    ctx.globalAlpha = .34; ctx.lineCap = "round";
+    ctx.strokeStyle = PAL.hairMHi; ctx.lineWidth = 10;
+    ctx.beginPath(); ctx.moveTo(-46, -70); ctx.quadraticCurveTo(-12, -92, 22, -82); ctx.stroke();
+    ctx.globalAlpha = .2; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(30, -66); ctx.quadraticCurveTo(50, -58, 58, -40); ctx.stroke();
     ctx.globalAlpha = 1;
+    ctx.fillStyle = lin(0, -48, 0, -8, [[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,.3)"]]);
+    ctx.fillRect(-90, -48, 180, 44);
     ctx.restore();
   }
 
@@ -2910,34 +3141,48 @@ const Character = (function () {
     ctx.quadraticCurveTo(58 + fx * .5, -74, fx * .5, -74);
     ctx.quadraticCurveTo(-58 + fx * .5, -74, -94 + fx * .5, -44);
     ctx.closePath();
-    ctx.fillStyle = PAL.cloth; ctx.fill();
+    ctx.fillStyle = lin(-94, -120, 94, -40,
+      [[0, "#dee7f8"], [.4, "#ffffff"], [1, "#cdd9ef"]]);
+    ctx.fill();
     ctx.save(); ctx.clip();
     floral(-104 + fx * .5, -152, 104 + fx * .5, -38, 777, 1.6);
-    const g = ctx.createLinearGradient(-94, 0, 94, 0);
-    g.addColorStop(0, "rgba(86,118,180,.3)"); g.addColorStop(.42, "rgba(255,255,255,0)");
-    g.addColorStop(1, "rgba(86,118,180,.3)");
-    ctx.fillStyle = g; ctx.fillRect(-110, -160, 220, 130);
+    // soft folds in the wrapped cloth
+    ctx.strokeStyle = "rgba(40,70,130,.16)"; ctx.lineWidth = 3; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-44 + fx * .5, -92); ctx.quadraticCurveTo(-52 + fx * .5, -70, -50 + fx * .5, -48);
+    ctx.moveTo( 34 + fx * .5, -96); ctx.quadraticCurveTo( 44 + fx * .5, -72, 42 + fx * .5, -48);
+    ctx.stroke();
+    ctx.fillStyle = lin(0, -150, 0, -40, [[0, "rgba(255,255,255,.35)"], [1, "rgba(60,90,150,.16)"]]);
+    ctx.fillRect(-110, -160, 220, 130);
     ctx.restore();
     ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 4; ctx.stroke();
     ctx.restore();
 
-    ctx.fillStyle = PAL.blue;
+    /* knot */
+    ctx.fillStyle = rad(fx * .5 - 4, -62, 1, 18, [[0, "#5f96ef"], [1, PAL.blue]]);
     ctx.beginPath(); ctx.ellipse(fx * .5, -58, 14, 9, 0, 0, TAU); ctx.fill();
     ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 2; ctx.stroke();
     ctx.restore();
   }
 
-  /* rim light tinted by the active scene */
-  function rimLight() {
-    const tint = Scenes.current === "lab" ? "rgba(120,220,255,.45)"
-              : Scenes.current === "tulou" ? "rgba(255,180,110,.42)"
-              : "rgba(150,190,255,.38)";
+  /* -------------- scene-matched key light and rim light ----------------- */
+  const LIGHT = {
+    sg:    { key: "rgba(150,190,255,.30)", rim: "rgba(120,170,255,.42)" },
+    tulou: { key: "rgba(255,206,150,.30)", rim: "rgba(255,168,96,.44)" },
+    lab:   { key: "rgba(160,230,255,.28)", rim: "rgba(120,220,255,.48)" }
+  };
+  function relight() {
+    const L = LIGHT[Scenes.current] || LIGHT.sg;
     ctx.globalCompositeOperation = "source-atop";
-    const g = ctx.createLinearGradient(-VW / 2, -TOP, VW / 2, BOT);
-    g.addColorStop(0, tint); g.addColorStop(.34, "rgba(0,0,0,0)");
-    g.addColorStop(.82, "rgba(0,0,0,0)"); g.addColorStop(1, tint);
-    ctx.fillStyle = g;
+    // key light from the upper left
+    ctx.fillStyle = rad(-150, -TOP + 60, 20, 520, [[0, L.key], [1, "rgba(0,0,0,0)"]]);
     ctx.fillRect(-VW, -TOP - 60, VW * 2, TOP + BOT + 120);
+    // rim on the opposite edge
+    ctx.fillStyle = lin(40, 0, VW / 2 + 30, 0, [[0, "rgba(0,0,0,0)"], [1, L.rim]]);
+    ctx.fillRect(-VW, -TOP - 60, VW * 2, TOP + BOT + 120);
+    // gentle ambient occlusion toward the feet
+    ctx.fillStyle = lin(0, BOT - 190, 0, BOT, [[0, "rgba(0,0,0,0)"], [1, "rgba(6,10,26,.34)"]]);
+    ctx.fillRect(-VW, BOT - 190, VW * 2, 200);
     ctx.globalCompositeOperation = "source-over";
   }
 
@@ -2948,11 +3193,11 @@ const Character = (function () {
     ctx.save();
     ctx.translate(offX, offY);
     ctx.scale(scale, scale);
-    ctx.fillStyle = "rgba(0,0,0,.26)";
-    ctx.beginPath(); ctx.ellipse(0, BOT - 6, 160, 17, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = rad(0, BOT - 6, 4, 190, [[0, "rgba(0,0,0,.34)"], [1, "rgba(0,0,0,0)"]]);
+    ctx.beginPath(); ctx.ellipse(0, BOT - 6, 175, 20, 0, 0, TAU); ctx.fill();
     drawBody(S.character);
     drawHead(S.character);
-    rimLight();
+    relight();
     ctx.restore();
   }
 
@@ -2962,17 +3207,41 @@ const Character = (function () {
 })();
 
 /* --------------------- 8. Speech: output + input ------------------------- */
+/* Voice selection is gender-aware: the concierge on stage decides which voice
+   speaks. Delivery is deliberately unhurried — the text is split into clauses
+   and spoken with small natural pauses rather than as one long utterance.    */
 const Speech = (function () {
   const synth = (typeof window !== "undefined" && window.speechSynthesis) || null;
-  let voices = [], current = null, queueTimer = 0;
-  let timeline = [], tlIndex = 0, tlStart = 0, tlActive = false;
-  let onDone = null;
+  let voices = [];
+  let timeline = [], tlIndex = 0, tlStart = 0, tlActive = false, onTlDone = null;
+  let queue = [], qIndex = 0, qTimer = 0, qLang = "en", qDone = null, token = 0;
 
   const LANG_TAGS = {
-    en:  ["en-SG", "en-GB", "en-AU", "en-US", "en"],
-    zh:  ["zh-CN", "zh-SG", "cmn-Hans-CN", "zh-Hans", "zh"],
-    hak: ["zh-CN", "zh-SG", "zh-HK", "yue-Hant-HK", "zh"]   // no Hakka voice exists — closest Chinese
+    en:  ["en-SG", "en-GB", "en-AU", "en-US", "en-IN", "en"],
+    zh:  ["zh-CN", "zh-SG", "cmn-Hans-CN", "zh-Hans", "zh-TW", "zh"],
+    hak: ["zh-CN", "zh-SG", "zh-TW", "zh-HK", "yue-Hant-HK", "zh"]  // no Hakka voice exists
   };
+
+  /* Per-character voice character. Slightly slower and warmer than default —
+     this is what makes the delivery read as calm rather than clipped. */
+  const TONE = {
+    female: { rate: 0.93, pitch: 1.14 },
+    male:   { rate: 0.90, pitch: 0.78 }
+  };
+
+  /* ---------------- voice inventory & gender inference ---------------- */
+  const FEMALE_NAMES = ("samantha karen moira tessa fiona victoria susan zira hazel catherine " +
+    "linda heather serena allison ava nicky kate amelie anna alice ellen joana luciana " +
+    "monica paulina satu sara yelda zosia milena ioana laura lekha mariska nora " +
+    "ting-ting tingting sin-ji sinji mei-jia meijia yu-shu yushu huihui yaoyao xiaoxiao " +
+    "xiaoyi xiaomo xiaoxuan xiaohan xiaorui xiaoshuang hiujin hiugaai zhiyu jenny aria " +
+    "michelle ana clara sonia libby natasha emily olivia isabella sophia amy joanna salli " +
+    "kendra kimberly ivy nicole raveena aditi seoyeon mizuki").split(/\s+/);
+  const MALE_NAMES = ("alex daniel fred tom aaron oliver david mark james ryan george guy " +
+    "brian rishi gordon arthur nathan diego jorge juan carlos thomas xander maged " +
+    "li-mu limu kangkang yunxi yunyang yunjian yunfeng yunhao wanlung danny liam " +
+    "matthew justin joey russell eric christopher andrew brandon steffan roger " +
+    "william ethan noah lucas mateo").split(/\s+/);
 
   function refreshVoices() {
     if (!synth) return;
@@ -2980,28 +3249,121 @@ const Speech = (function () {
   }
   if (synth) {
     refreshVoices();
-    try { synth.addEventListener("voiceschanged", refreshVoices); } catch (e) {
-      synth.onvoiceschanged = refreshVoices;
-    }
+    try { synth.addEventListener("voiceschanged", refreshVoices); }
+    catch (e) { synth.onvoiceschanged = refreshVoices; }
   }
-  function pickVoice(lang) {
+
+  /** "female" | "male" | "" when the voice gives no usable signal. */
+  function guessGender(v) {
+    const n = String((v && v.name) || "").toLowerCase();
+    if (!n) return "";
+    if (/(^|[^a-z])female([^a-z]|$)|\(female\)|女/.test(n)) return "female";
+    if (/(^|[^a-z])male([^a-z]|$)|\(male\)|男/.test(n)) return "male";
+    for (const k of FEMALE_NAMES) if (k.length > 2 && n.indexOf(k) !== -1) return "female";
+    for (const k of MALE_NAMES)   if (k.length > 2 && n.indexOf(k) !== -1) return "male";
+    return "";
+  }
+  /** Prefer modern neural voices; heavily penalise robotic fallbacks. */
+  function qualityScore(v) {
+    const n = String((v && v.name) || "").toLowerCase();
+    let s = 0;
+    if (/natural|neural|premium|enhanced|online/.test(n)) s += 7;
+    if (/google/.test(n)) s += 4;
+    if (/siri/.test(n)) s += 4;
+    if (/microsoft/.test(n)) s += 2;
+    if (/espeak|compact|pico|festival|robo|novelty|whisper|bells|bad news|good news/.test(n)) s -= 12;
+    if (v && v.localService === false) s += 1;
+    return s;
+  }
+  function langScore(v, lang) {
+    const tags = LANG_TAGS[lang] || LANG_TAGS.en;
+    const vl = String((v && v.lang) || "").toLowerCase().replace(/_/g, "-");
+    if (!vl) return -Infinity;
+    for (let i = 0; i < tags.length; i++) {
+      const t = tags[i].toLowerCase();
+      if (vl === t) return 40 - i * 2;
+    }
+    const base = (tags[0] || "").split("-")[0].toLowerCase();
+    if (vl.split("-")[0] === base) return 22;
+    return -Infinity;
+  }
+  function scoreVoice(v, lang, gender) {
+    const ls = langScore(v, lang);
+    if (!isFinite(ls)) return -Infinity;
+    let s = ls + qualityScore(v);
+    const g = guessGender(v);
+    if (gender) {
+      if (g === gender) s += 32;
+      else if (g) s -= 28;          // wrong-gender voice is worse than an unknown one
+    }
+    return s;
+  }
+  /** Best available voice for a language + character gender, or null. */
+  function pickVoice(lang, gender) {
     refreshVoices();
     if (!voices.length) return null;
-    const tags = LANG_TAGS[lang] || LANG_TAGS.en;
-    for (const tag of tags) {
-      const exact = voices.find(v => v.lang && v.lang.toLowerCase() === tag.toLowerCase());
-      if (exact) return exact;
+    if (S.voiceURI && S.voiceURI !== "auto") {
+      const forced = voices.find(v => v.voiceURI === S.voiceURI || v.name === S.voiceURI);
+      if (forced) return forced;
     }
-    for (const tag of tags) {
-      const p = tag.split("-")[0].toLowerCase();
-      const near = voices.find(v => v.lang && v.lang.toLowerCase().indexOf(p) === 0);
-      if (near) return near;
+    let best = null, bestScore = -Infinity;
+    for (const v of voices) {
+      const s = scoreVoice(v, lang, gender);
+      if (s > bestScore) { bestScore = s; best = v; }
     }
-    return voices[0] || null;
+    return isFinite(bestScore) ? best : (voices[0] || null);
   }
-  function available() { return !!(synth && (voices.length || (synth.getVoices() || []).length)); }
+  function currentGender() { return S.character === "male" ? "male" : "female"; }
+  function available() { refreshVoices(); return !!(synth && voices.length); }
+  function listVoices() { refreshVoices(); return voices.slice(); }
+  function describeChoice(lang, gender) {
+    const v = pickVoice(lang, gender);
+    if (!v) return null;
+    return { name: v.name, lang: v.lang, gender: guessGender(v) || "unknown" };
+  }
 
-  /* ---------- viseme construction ---------- */
+  /* ------------------------- text preparation ------------------------- */
+  function stripMarkup(s) {
+    return String(s || "")
+      .replace(/\*\*/g, "")
+      .replace(/[*_`#>]/g, "")
+      .replace(/[•·]/g, ", ")
+      .replace(/\s*—\s*/g, ", ")
+      .replace(/\s*–\s*/g, ", ")
+      .replace(/([,，])\s*[,，]/g, "$1")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  /** Split into speakable clauses so the voice can breathe between them. */
+  function chunkText(s, maxLen) {
+    const MAX = maxLen || 170;
+    const out = [];
+    let buf = "";
+    for (let i = 0; i < s.length; i++) {
+      buf += s[i];
+      const end = /[.!?。！？…]/.test(s[i]) && !/[.。]/.test(s[i + 1] || "");
+      if (end && buf.trim().length >= 8) { out.push(buf.trim()); buf = ""; }
+      else if (buf.length >= MAX) {
+        // overlong sentence: break at the last comma, else at the last space
+        let cut = Math.max(buf.lastIndexOf(","), buf.lastIndexOf("，"), buf.lastIndexOf("、"),
+                           buf.lastIndexOf("；"), buf.lastIndexOf(";"));
+        if (cut < MAX * 0.4) cut = buf.lastIndexOf(" ");
+        if (cut < MAX * 0.3) cut = buf.length - 1;
+        out.push(buf.slice(0, cut + 1).trim());
+        buf = buf.slice(cut + 1);
+      }
+    }
+    if (buf.trim()) out.push(buf.trim());
+    // merge stray fragments into their neighbour
+    const merged = [];
+    for (const c of out) {
+      if (merged.length && c.length < 10) merged[merged.length - 1] += " " + c;
+      else merged.push(c);
+    }
+    return merged.length ? merged : [s];
+  }
+
+  /* --------------------------- viseme timeline ------------------------- */
   const VIS = {
     a: [0.95, 0.35], e: [0.58, 0.80], i: [0.34, 1.00], o: [0.86, 0.10], u: [0.50, 0.00],
     m: [0.03, 0.10], b: [0.05, 0.15], p: [0.05, 0.15],
@@ -3013,14 +3375,6 @@ const Speech = (function () {
   };
   const CJK_POOL = ["a", "o", "e", "i", "u", "a", "e", "o", "i", "a"];
 
-  function stripMarkup(s) {
-    return String(s || "")
-      .replace(/\*\*/g, "")
-      .replace(/[*_`#>]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-  /** Build [{t, open, wide}] frames plus a total duration in ms. */
   function buildTimeline(text, rate) {
     const s = stripMarkup(text);
     const frames = [];
@@ -3031,8 +3385,7 @@ const Speech = (function () {
       if (/\s/.test(ch)) { frames.push({ t, open: 0.06, wide: 0.1 }); t += 55 / r; continue; }
       if (/[,;:，、；：]/.test(ch)) { frames.push({ t, open: 0.02, wide: 0 }); t += 190 / r; continue; }
       if (/[.!?。！？…]/.test(ch)) { frames.push({ t, open: 0.02, wide: 0, nod: 1 }); t += 330 / r; continue; }
-      if (/[·—\-–（）()"'’“”《》【】]/.test(ch)) { t += 30 / r; continue; }
-
+      if (/[()（）"'’“”《》【】-]/.test(ch)) { t += 30 / r; continue; }
       let v;
       if (hasCJK(ch)) {
         v = VIS[CJK_POOL[hash32(ch) % CJK_POOL.length]];
@@ -3044,58 +3397,53 @@ const Speech = (function () {
         const lc = ch.toLowerCase();
         v = VIS[lc];
         if (!v) { t += 24 / r; continue; }
-        const isVowel = "aeiou".indexOf(lc) !== -1;
         frames.push({ t, open: v[0], wide: v[1] });
-        t += (isVowel ? 88 : 52) / r;
+        t += ("aeiou".indexOf(lc) !== -1 ? 88 : 52) / r;
       }
     }
     frames.push({ t: t + 90 / r, open: 0, wide: 0 });
     return { frames, dur: t + 140 / r };
   }
-
   function startTimeline(text, rate, done) {
     const built = buildTimeline(text, rate);
-    timeline = built.frames; tlIndex = 0; tlStart = now(); tlActive = true;
-    onDone = done || null;
+    timeline = built.frames; tlIndex = 0; tlStart = now(); tlActive = true; onTlDone = done || null;
     return built.dur;
   }
   function stopTimeline() {
     tlActive = false; timeline = []; tlIndex = 0;
     Character.setViseme(0, 0);
   }
-  /** Called every animation frame. */
   function tick() {
     if (!tlActive) return;
-    const el = now() - tlStart;
+    const el2 = now() - tlStart;
     let f = null;
-    while (tlIndex < timeline.length && timeline[tlIndex].t <= el) { f = timeline[tlIndex]; tlIndex++; }
-    if (f) {
-      Character.setViseme(f.open, f.wide);
-      if (f.nod) Character.nod(1);
-    }
+    while (tlIndex < timeline.length && timeline[tlIndex].t <= el2) { f = timeline[tlIndex]; tlIndex++; }
+    if (f) { Character.setViseme(f.open, f.wide); if (f.nod) Character.nod(1); }
     if (tlIndex >= timeline.length) {
-      tlActive = false;
-      Character.setViseme(0, 0);
-      const d = onDone; onDone = null;
+      tlActive = false; Character.setViseme(0, 0);
+      const d = onTlDone; onTlDone = null;
       if (d) d();
     }
   }
-  /** Re-anchor lip sync to a real word boundary event from the speech engine. */
   function resync(charIndex, text) {
     if (!tlActive || !timeline.length) return;
-    const frac = clamp(charIndex / Math.max(1, stripMarkup(text).length), 0, 1);
+    const frac = clamp(charIndex / Math.max(1, text.length), 0, 1);
     const target = timeline[timeline.length - 1].t * frac;
-    const drift = (now() - tlStart) - target;
-    if (Math.abs(drift) > 130) {
+    if (Math.abs((now() - tlStart) - target) > 140) {
       tlStart = now() - target;
       tlIndex = 0;
       while (tlIndex < timeline.length && timeline[tlIndex].t <= target) tlIndex++;
     }
   }
 
-  /* ---------- speak ---------- */
+  /* ------------------------------- speak ------------------------------- */
+  function effRate()  { return clamp(TONE[currentGender()].rate  * S.rate,  0.4, 2); }
+  function effPitch() { return clamp(TONE[currentGender()].pitch * S.pitch, 0.2, 2); }
+
   function cancel() {
-    clearTimeout(queueTimer);
+    token++;
+    clearTimeout(qTimer);
+    queue = []; qIndex = 0; qDone = null;
     try { if (synth) synth.cancel(); } catch (e) {}
     stopTimeline();
     S.speaking = false;
@@ -3106,60 +3454,86 @@ const Speech = (function () {
     cancel();
     const clean = stripMarkup(text);
     if (!clean) { if (done) done(); return; }
+    qLang = lang || S.lang;
+    queue = chunkText(clean);
+    qIndex = 0; qDone = done || null;
     S.speaking = true;
     UIState.status("speaking");
-
-    const finish = () => {
-      S.speaking = false;
-      stopTimeline();
-      UIState.status("ready");
-      if (done) done();
-    };
-
-    if (!S.tts || !synth) {                        // silent lip sync only
-      const dur = startTimeline(clean, S.rate, finish);
-      queueTimer = setTimeout(() => { if (S.speaking) finish(); }, dur + 400);
-      return;
-    }
-
-    const v = pickVoice(lang || S.lang);
-    if (!v) {
-      const dur = startTimeline(clean, S.rate, finish);
-      queueTimer = setTimeout(() => { if (S.speaking) finish(); }, dur + 400);
-      return;
-    }
-    current = v;
-    const u = new SpeechSynthesisUtterance(clean);
-    u.voice = v;
-    u.lang = v.lang || (LANG_TAGS[lang || S.lang] || ["en-US"])[0];
-    u.rate = clamp(S.rate, 0.5, 2);
-    u.pitch = clamp(S.pitch * (S.character === "female" ? 1.06 : 0.86), 0.4, 2);
-    u.volume = 1;
-    u.onboundary = (ev) => { if (typeof ev.charIndex === "number") resync(ev.charIndex, clean); };
-    u.onend = finish;
-    u.onerror = finish;
-
-    const dur = startTimeline(clean, S.rate, null);
-    // Safety net: some engines never fire onend.
-    queueTimer = setTimeout(() => { if (S.speaking) finish(); }, dur * 1.9 + 3500);
-    try { synth.speak(u); } catch (e) { finish(); }
+    const my = ++token;
+    next(my);
   }
 
-  /* ---------- recognition ---------- */
+  function finishAll(my) {
+    if (my !== token) return;
+    S.speaking = false;
+    stopTimeline();
+    UIState.status("ready");
+    const d = qDone; qDone = null; queue = [];
+    if (d) d();
+  }
+
+  function next(my) {
+    if (my !== token) return;
+    if (qIndex >= queue.length) { finishAll(my); return; }
+    const chunk = queue[qIndex++];
+    const rate = effRate();
+    const pause = /[.!?。！？…]$/.test(chunk) ? 230 : 110;
+
+    const advance = () => {
+      if (my !== token) return;
+      clearTimeout(qTimer);
+      qTimer = setTimeout(() => next(my), pause);
+    };
+
+    // Silent mode (voice off, no engine, or no usable voice): lip-sync only.
+    const v = (S.tts && synth) ? pickVoice(qLang, currentGender()) : null;
+    if (!v) {
+      const dur = startTimeline(chunk, rate, advance);
+      clearTimeout(qTimer);
+      qTimer = setTimeout(() => { if (my === token && tlActive) { stopTimeline(); advance(); } }, dur + 500);
+      return;
+    }
+
+    const u = new SpeechSynthesisUtterance(chunk);
+    u.voice = v;
+    u.lang = v.lang || (LANG_TAGS[qLang] || ["en-US"])[0];
+    u.rate = rate;
+    u.pitch = effPitch();
+    u.volume = 1;
+    u.onboundary = (ev) => { if (typeof ev.charIndex === "number") resync(ev.charIndex, chunk); };
+    u.onend = advance;
+    u.onerror = advance;
+
+    const dur = startTimeline(chunk, rate, null);
+    // Some engines never fire onend — never leave the queue stalled.
+    clearTimeout(qTimer);
+    qTimer = setTimeout(advance, dur * 2 + 3000);
+    try { synth.speak(u); } catch (e) { advance(); }
+  }
+
+  /** Short spoken sample used by the Settings "preview" button. */
+  function preview() {
+    const line = {
+      en: S.character === "male"
+        ? "Hello, I am A-Hiung, your Hakka concierge. Take your time — I am happy to explain."
+        : "Hello, I am A-Moi, your Hakka concierge. Take your time — I am happy to explain.",
+      zh: "你好，我是您的客家同志。请慢慢来，我很乐意为您讲解。",
+      hak: "你好，𠊎係你个客家同志。慢慢来，𠊎当欢喜同你讲。"
+    };
+    speak(line[S.lang] || line.en, S.lang);
+  }
+
+  /* ---------------------------- recognition ---------------------------- */
   const SR = (typeof window !== "undefined") &&
              (window.SpeechRecognition || window.webkitSpeechRecognition);
   let rec = null, recActive = false;
 
   function recSupported() { return !!SR; }
-  function recLang() {
-    return S.lang === "zh" ? "zh-CN" : S.lang === "hak" ? "zh-CN" : "en-SG";
-  }
+  function recLang() { return S.lang === "en" ? "en-SG" : "zh-CN"; }
   function startRec(onInterim, onFinal, onErr) {
     if (!SR) { if (onErr) onErr("unsupported"); return false; }
     stopRec();
-    try {
-      rec = new SR();
-    } catch (e) { if (onErr) onErr("unsupported"); return false; }
+    try { rec = new SR(); } catch (e) { if (onErr) onErr("unsupported"); return false; }
     rec.lang = recLang();
     rec.interimResults = true;
     rec.continuous = false;
@@ -3169,19 +3543,12 @@ const Speech = (function () {
       let interim = "";
       for (let i = ev.resultIndex; i < ev.results.length; i++) {
         const r = ev.results[i];
-        if (r.isFinal) finalText += r[0].transcript;
-        else interim += r[0].transcript;
+        if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript;
       }
       if (interim && onInterim) onInterim(interim);
     };
-    rec.onerror = (ev) => {
-      recActive = false;
-      if (onErr) onErr(ev && ev.error ? ev.error : "error");
-    };
-    rec.onend = () => {
-      recActive = false;
-      if (onFinal) onFinal(finalText.trim());
-    };
+    rec.onerror = (ev) => { recActive = false; if (onErr) onErr(ev && ev.error ? ev.error : "error"); };
+    rec.onend = () => { recActive = false; if (onFinal) onFinal(finalText.trim()); };
     try { rec.start(); recActive = true; return true; }
     catch (e) { recActive = false; if (onErr) onErr("start-failed"); return false; }
   }
@@ -3192,7 +3559,9 @@ const Speech = (function () {
   function isRecording() { return recActive; }
 
   return { speak, cancel, tick, available, recSupported, startRec, stopRec, isRecording,
-           buildTimeline, stripMarkup, pickVoice, get voices() { refreshVoices(); return voices; } };
+           buildTimeline, stripMarkup, chunkText, pickVoice, scoreVoice, guessGender,
+           listVoices, describeChoice, preview, effRate, effPitch, TONE,
+           get voices() { refreshVoices(); return voices; } };
 })();
 
 /* ----------------------------- 9. UI layer ------------------------------- */
@@ -3248,9 +3617,16 @@ function setScene(name) {
 }
 function setCharacter(kind) {
   if (kind !== "male" && kind !== "female") return;
+  const changed = S.character !== kind;
   S.character = kind;
   Character.build(kind, true);
   $$(".avbtn[data-char]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.char === kind)));
+  if (changed) {
+    // the voice belongs to the character on stage — stop mid-sentence and re-pick
+    Speech.cancel();
+    renderVoiceUI();
+    renderDiag();
+  }
 }
 function setExpression(name) {
   S.expression = name;
@@ -3266,7 +3642,39 @@ function setLang(l) {
   renderExplore();
   renderPhrases();
   renderAbout();
+  renderVoiceUI();
 }
+/** Populate the voice dropdown and show which voice will actually speak. */
+function renderVoiceUI() {
+  const sel = $("#selVoice");
+  if (!sel) return;
+  const list = Speech.listVoices();
+  const keep = S.voiceURI;
+  sel.innerHTML = "";
+  const auto = document.createElement("option");
+  auto.value = "auto"; auto.textContent = T("set.auto");
+  sel.appendChild(auto);
+  list.slice()
+      .sort((a, b) => Speech.scoreVoice(b, S.lang, S.character) - Speech.scoreVoice(a, S.lang, S.character))
+      .forEach(v => {
+        const o = document.createElement("option");
+        o.value = v.voiceURI || v.name;
+        const g = Speech.guessGender(v);
+        o.textContent = v.name + " (" + v.lang + (g ? " · " + g : "") + ")";
+        sel.appendChild(o);
+      });
+  sel.value = keep;
+  if (sel.value !== keep) { sel.value = "auto"; S.voiceURI = "auto"; }
+
+  const chosen = Speech.describeChoice(S.lang, S.character);
+  const label = $("#voiceNow");
+  if (label) {
+    label.textContent = chosen
+      ? "▸ " + chosen.name + " · " + chosen.lang + " · " + chosen.gender
+      : "▸ no speech voice installed on this device";
+  }
+}
+
 function applyI18N() {
   $$("[data-t]").forEach(n => { n.textContent = T(n.dataset.t); });
   $("#appTitle").textContent = T("app.title");
@@ -3484,9 +3892,9 @@ function renderPhrases() {
 /* ---------------------------- about / sources ---------------------------- */
 function renderAbout() {
   const intro = {
-    en:"This concierge runs entirely offline in your browser. Nothing is uploaded and no network call is ever made. Every factual answer is drawn from a hand-curated knowledge base compiled from the sources below; Hakka romanisation follows Pha̍k-fa-sṳ based on the Meixian variety and is a practical approximation for learners. Dates for festivals and events change year to year — please confirm with the organising association.",
-    zh:"本导览完全在您的浏览器内离线运行，不上传任何数据，也不发出任何网络请求。所有事实性内容均取自依下列出处人工整理的知识库；客家话拼音采用白话字，以梅县音为准，属学习用的实用近似。节庆日期逐年不同，请以主办团体公告为准。",
-    hak:"这个导览完全在你个浏览器内底离线行，无上传么个，也无发网络请求。逐句事实都出自照下背出处人手整理个资料；客家拼音用白话字，以梅县音为准，係学习用个近似写法。节庆日期逐年无共，请照主办单位个公告。"
+    en:"This concierge runs entirely offline in your browser. Nothing is uploaded and no network call is ever made. The voice follows the character on stage: A-Moi speaks with the best female voice installed on your device, A-Hiung with the best male one, both paced a little slower than default so the delivery stays calm. Every factual answer is drawn from a hand-curated knowledge base compiled from the sources below; Hakka romanisation follows Pha̍k-fa-sṳ based on the Meixian variety and is a practical approximation for learners. Dates for festivals and events change year to year — please confirm with the organising association.",
+    zh:"本导览完全在您的浏览器内离线运行，不上传任何数据，也不发出任何网络请求。语音随台上的角色而定：阿妹使用您设备上音质最佳的女声，阿雄使用最佳男声，两者语速都略慢于默认值，以求从容自然。所有事实性内容均取自依下列出处人工整理的知识库；客家话拼音采用白话字，以梅县音为准，属学习用的实用近似。节庆日期逐年不同，请以主办团体公告为准。",
+    hak:"这个导览完全在你个浏览器内底离线行，无上传么个，也无发网络请求。声音跈台顶个角色行：阿妹用你设备顶最好个女声，阿雄用最好个男声，两个都讲较慢兜，听起来正会安然。逐句事实都出自照下背出处人手整理个资料；客家拼音用白话字，以梅县音为准，係学习用个近似写法。节庆日期逐年无共，请照主办单位个公告。"
   };
   const list = Object.keys(SOURCES).map(k => "• " + SOURCES[k]).join("\n");
   $("#aboutTxt").textContent = (intro[S.lang] || intro.en) + "\n\n" + list;
@@ -3502,9 +3910,13 @@ function switchTab(name) {
 
 /* ------------------------------ diagnostics ------------------------------ */
 function renderDiag() {
+  const vf = Speech.describeChoice(S.lang, "female");
+  const vm = Speech.describeChoice(S.lang, "male");
   const rows = [
     ["Speech synthesis", Speech.available() ? ["ok", "AVAILABLE"] : ["warn", "NOT FOUND"]],
     ["Voices detected", ["", String(Speech.voices.length)]],
+    ["Voice · A-Moi 阿妹", vf ? [vf.gender === "female" ? "ok" : "warn", vf.name] : ["warn", "NONE"]],
+    ["Voice · A-Hiung 阿雄", vm ? [vm.gender === "male" ? "ok" : "warn", vm.name] : ["warn", "NONE"]],
     ["Speech recognition", Speech.recSupported() ? ["ok", "AVAILABLE"] : ["warn", "UNSUPPORTED"]],
     ["Hakka voice", ["warn", "FALLBACK → CHINESE"]],
     ["Knowledge entries", ["ok", String(KB.length)]],
@@ -3659,6 +4071,45 @@ function runSelfTests() {
   setScene(st0.s);
   ok("All three scenes selectable", scenesOK);
 
+  // 14. gender-aware voice selection, checked against a synthetic voice list so
+  //     the result does not depend on which voices this device happens to have
+  const FAKE = [
+    { name: "Microsoft David - English (United States)", lang: "en-US", voiceURI: "d", localService: true },
+    { name: "Microsoft Zira - English (United States)",  lang: "en-US", voiceURI: "z", localService: true },
+    { name: "Google UK English Female", lang: "en-GB", voiceURI: "gf", localService: false },
+    { name: "Google UK English Male",   lang: "en-GB", voiceURI: "gm", localService: false },
+    { name: "eSpeak English",           lang: "en",    voiceURI: "es", localService: true },
+    { name: "Ting-Ting",                lang: "zh-CN", voiceURI: "tt", localService: true },
+    { name: "Li-mu",                    lang: "zh-CN", voiceURI: "lm", localService: true }
+  ];
+  const bestOf = (lang, gender) => FAKE.slice()
+    .sort((a, b) => Speech.scoreVoice(b, lang, gender) - Speech.scoreVoice(a, lang, gender))[0];
+  const vEnF = bestOf("en", "female"), vEnM = bestOf("en", "male");
+  const vZhF = bestOf("zh", "female"), vZhM = bestOf("zh", "male");
+  const genderOK = Speech.guessGender(vEnF) === "female" && Speech.guessGender(vEnM) === "male" &&
+                   vZhF.name === "Ting-Ting" && vZhM.name === "Li-mu" &&
+                   Speech.scoreVoice(FAKE[4], "en", "female") < Speech.scoreVoice(FAKE[2], "en", "female");
+  ok("Voice matches the character's gender (EN + 中文; robotic voices deprioritised)",
+     genderOK, `${vEnF.name} / ${vEnM.name} / ${vZhF.name} / ${vZhM.name}`);
+
+  // 15. the two characters speak with different, calm tone settings
+  const prevChar = S.character;
+  S.character = "female"; const fR = Speech.effRate(), fP = Speech.effPitch();
+  S.character = "male";   const mR = Speech.effRate(), mP = Speech.effPitch();
+  S.character = prevChar;
+  const toneOK = fP > mP + 0.2 && fR <= 1 && mR <= 1 && fR > 0.7 && mR > 0.7;
+  ok("Female voice pitched above male, both paced calmly",
+     toneOK, `f ${fR.toFixed(2)}/${fP.toFixed(2)} · m ${mR.toFixed(2)}/${mP.toFixed(2)}`);
+
+  // 16. long answers are broken into speakable clauses without losing text
+  const sample = Speech.stripMarkup(KB.find(e => e.id === "tulou").body.en);
+  const chunks = Speech.chunkText(sample);
+  const chunkOK = chunks.length >= 3 &&
+                  chunks.every(c => c.length > 0 && c.length <= 210) &&
+                  chunks.join(" ").replace(/\s+/g, "") === sample.replace(/\s+/g, "");
+  ok("Long answers split into natural clauses (" + chunks.length + " for the tulou entry)",
+     chunkOK, chunks.length ? "longest " + Math.max.apply(null, chunks.map(c => c.length)) : "none");
+
   const head = `AI Hakka Concierge — self-test\n${new Date().toLocaleString()}\n` +
                `${pass} passed · ${fail} failed\n${"─".repeat(42)}\n`;
   const log = $("#testLog");
@@ -3781,6 +4232,11 @@ function wire() {
   $("#selQuality").onchange = e => { S.quality = e.target.value; onResize(); };
   $("#rngRate").oninput = e => { S.rate = parseFloat(e.target.value); $("#rateVal").textContent = S.rate.toFixed(2); };
   $("#rngPitch").oninput = e => { S.pitch = parseFloat(e.target.value); $("#pitchVal").textContent = S.pitch.toFixed(2); };
+  $("#selVoice").onchange = e => { S.voiceURI = e.target.value; renderVoiceUI(); renderDiag(); Speech.preview(); };
+  $("#btnPreview").onclick = () => {
+    if (!Speech.available()) { UIState.toast(T("toast.notts")); return; }
+    setExpression("warm"); Speech.preview();
+  };
   $("#runTests").onclick = () => { renderDiag(); runSelfTests(); };
   $("#resetBtn").onclick = () => {
     Speech.cancel();
@@ -3877,14 +4333,21 @@ function init() {
     $("#rateVal").textContent = S.rate.toFixed(2);
     $("#pitchVal").textContent = S.pitch.toFixed(2);
     $("#selQuality").value = S.quality;
+    $("#rngRate").value = String(S.rate);
+    $("#rngPitch").value = String(S.pitch);
+    renderVoiceUI();
 
     welcome();
     loop();
     boot();
 
     // Voice list often arrives asynchronously; refresh the diagnostics when it does.
-    setTimeout(renderDiag, 1200);
-    setTimeout(renderDiag, 3000);
+    const refreshVoiceUI = () => { renderVoiceUI(); renderDiag(); };
+    setTimeout(refreshVoiceUI, 1200);
+    setTimeout(refreshVoiceUI, 3000);
+    if (window.speechSynthesis) {
+      try { window.speechSynthesis.addEventListener("voiceschanged", refreshVoiceUI); } catch (e) {}
+    }
 
     // Expose a tiny API for automated checking.
     window.HakkaConcierge = {
