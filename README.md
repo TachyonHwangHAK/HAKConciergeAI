@@ -129,7 +129,7 @@ group known for:
   • Empowered women who never practiced foot-binding
   • 80 million+ people in a truly global diaspora
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Made with ❤️ to celebrate Hakka heritage
 客家文化，生生不息 — Hakka culture, forever thriving
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
