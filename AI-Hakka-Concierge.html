@@ -1,0 +1,3905 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="AI Hakka Concierge — an offline trilingual (English / 中文 / 客家话) virtual guide to Hakka history, culture and language in Singapore and Guangzhou–Meizhou.">
+<title>客家数字智能同志 · AI Hakka Concierge</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f5fd0'/%3E%3Ctext x='32' y='45' font-size='38' text-anchor='middle' fill='white' font-family='serif'%3E客%3C/text%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   AI HAKKA CONCIERGE — 客家数字智能同志
+   Single-file offline application. No network required.
+   ============================================================ */
+
+/* ---------- Design tokens ---------- */
+:root{
+  --hakka-blue:#2f6fe0;
+  --hakka-blue-deep:#1b47a8;
+  --porcelain:#8fbcff;
+  --terracotta:#e07a5f;
+  --gold:#f2c14e;
+  --jade:#3fbf9b;
+
+  --r-sm:8px; --r-md:14px; --r-lg:20px; --r-xl:28px;
+  --sp:8px;
+  --hdr:58px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --font:"Inter","Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",
+         "PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  --font-cjk:"Noto Serif SC","Songti SC","STSong","PingFang SC","Microsoft YaHei",serif;
+}
+
+html[data-theme="dark"]{
+  --bg-0:#080b14;
+  --bg-1:#0e1322;
+  --bg-2:#151c30;
+  --bg-3:#1d2740;
+  --glass:rgba(20,28,50,.66);
+  --glass-hi:rgba(45,60,100,.42);
+  --stroke:rgba(140,175,255,.16);
+  --stroke-hi:rgba(140,175,255,.34);
+  --txt-0:#eaf0ff;
+  --txt-1:#a9b7d6;
+  --txt-2:#6f7fa3;
+  --accent:#5b9bff;
+  --accent-2:#8fbcff;
+  --bubble-ai:rgba(38,58,110,.55);
+  --bubble-me:linear-gradient(135deg,#2f6fe0,#1b47a8);
+  --shadow:0 18px 50px rgba(0,0,0,.55);
+  --shadow-sm:0 6px 18px rgba(0,0,0,.4);
+}
+html[data-theme="light"]{
+  --bg-0:#eef2fa;
+  --bg-1:#f7f9fd;
+  --bg-2:#ffffff;
+  --bg-3:#e6edf9;
+  --glass:rgba(255,255,255,.78);
+  --glass-hi:rgba(255,255,255,.92);
+  --stroke:rgba(30,70,150,.14);
+  --stroke-hi:rgba(30,70,150,.3);
+  --txt-0:#0f1a30;
+  --txt-1:#42557a;
+  --txt-2:#7b8aa8;
+  --accent:#1f5fd0;
+  --accent-2:#2f6fe0;
+  --bubble-ai:rgba(226,236,252,.95);
+  --bubble-me:linear-gradient(135deg,#2f6fe0,#1b47a8);
+  --shadow:0 16px 40px rgba(20,45,100,.16);
+  --shadow-sm:0 4px 14px rgba(20,45,100,.12);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:var(--font);
+  background:var(--bg-0);
+  color:var(--txt-0);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .4s var(--ease),color .4s var(--ease);
+}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--stroke-hi);border-radius:9px}
+::-webkit-scrollbar-track{background:transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ---------- App shell ---------- */
+#app{
+  display:grid;
+  min-width:0;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:var(--hdr) 1fr;
+  height:100dvh;
+  height:100vh;
+  overflow:hidden;
+}
+@supports (height:100dvh){#app{height:100dvh}}
+
+/* ---------- Header ---------- */
+header{
+  display:flex;align-items:center;gap:10px;
+  padding:0 12px;
+  background:var(--glass);
+  backdrop-filter:blur(18px) saturate(150%);
+  -webkit-backdrop-filter:blur(18px) saturate(150%);
+  border-bottom:1px solid var(--stroke);
+  z-index:40;
+  padding-top:env(safe-area-inset-top);
+  height:calc(var(--hdr) + env(safe-area-inset-top));
+  min-width:0;overflow:hidden;
+}
+.hbtns{min-width:0}
+.brand{display:flex;align-items:center;gap:9px;min-width:0;overflow:hidden;flex:0 1 auto}
+.brand .mark{
+  width:34px;height:34px;flex:none;border-radius:10px;
+  background:linear-gradient(140deg,var(--hakka-blue),var(--hakka-blue-deep));
+  color:#fff;display:grid;place-items:center;font-family:var(--font-cjk);
+  font-size:19px;font-weight:700;box-shadow:0 4px 14px rgba(31,95,208,.45);
+}
+.brand .txt{min-width:0;overflow:hidden}
+.brand h1{margin:0;font-size:14.5px;font-weight:700;letter-spacing:.2px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.brand p{margin:0;font-size:10.5px;color:var(--txt-2);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.spacer{flex:1}
+
+.hbtns{display:flex;align-items:center;gap:6px}
+.iconbtn{
+  width:36px;height:36px;border-radius:11px;display:grid;place-items:center;
+  background:var(--glass-hi);border:1px solid var(--stroke);
+  color:var(--txt-1);transition:.2s var(--ease);flex:none;
+}
+.iconbtn:hover{color:var(--txt-0);border-color:var(--stroke-hi);transform:translateY(-1px)}
+.iconbtn:active{transform:translateY(0) scale(.95)}
+.iconbtn.on{color:#fff;background:linear-gradient(135deg,var(--hakka-blue),var(--hakka-blue-deep));
+  border-color:transparent;box-shadow:0 4px 14px rgba(31,95,208,.4)}
+.iconbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+
+.seg{display:flex;background:var(--glass-hi);border:1px solid var(--stroke);
+  border-radius:11px;padding:3px;gap:2px}
+.seg button{
+  padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;color:var(--txt-2);
+  transition:.18s var(--ease);white-space:nowrap;
+}
+.seg button:hover{color:var(--txt-0)}
+.seg button[aria-pressed="true"]{
+  background:linear-gradient(135deg,var(--hakka-blue),var(--hakka-blue-deep));
+  color:#fff;box-shadow:0 3px 10px rgba(31,95,208,.35)
+}
+
+/* ---------- Main layout ---------- */
+main{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(320px,420px);
+  overflow:hidden;
+  min-height:0;min-width:0;
+}
+main > *{min-width:0;min-height:0}
+@media (max-width:960px){
+  main{grid-template-columns:minmax(0,1fr);
+       grid-template-rows:minmax(0,44dvh) minmax(0,1fr)}
+}
+@media (max-width:960px) and (max-height:640px){
+  main{grid-template-rows:minmax(0,38dvh) minmax(0,1fr)}
+}
+
+/* ---------- Stage ---------- */
+#stage{
+  position:relative;overflow:hidden;background:#05070f;min-height:0;
+  contain:strict;
+}
+#bgCanvas,#charCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#charCanvas{z-index:2}
+#stageVignette{
+  position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 40%,transparent 45%,rgba(0,0,0,.42) 100%);
+  mix-blend-mode:multiply;
+}
+html[data-theme="light"] #stageVignette{
+  background:radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(10,25,60,.2) 100%);
+}
+
+/* Scene chips */
+.stage-top{
+  position:absolute;top:10px;left:10px;right:10px;z-index:6;
+  display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;pointer-events:none;
+}
+.chipbar{display:flex;gap:6px;flex-wrap:wrap;pointer-events:auto}
+.chip{
+  padding:6px 11px;border-radius:999px;font-size:11.5px;font-weight:600;
+  background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--stroke);color:var(--txt-1);transition:.2s var(--ease);
+  display:flex;align-items:center;gap:5px;
+}
+.chip:hover{color:var(--txt-0);border-color:var(--stroke-hi)}
+.chip[aria-pressed="true"]{
+  background:linear-gradient(135deg,rgba(47,111,224,.95),rgba(27,71,168,.95));
+  color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(31,95,208,.45)
+}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.65}
+
+/* Status pill */
+#statusPill{
+  position:absolute;top:10px;right:10px;z-index:7;pointer-events:none;
+  padding:6px 11px;border-radius:999px;font-size:11px;font-weight:600;
+  background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--stroke);color:var(--txt-1);
+  display:flex;align-items:center;gap:6px;opacity:0;transform:translateY(-6px);
+  transition:.28s var(--ease);
+}
+#statusPill.show{opacity:1;transform:none}
+#statusPill .led{width:7px;height:7px;border-radius:50%;background:var(--jade);
+  box-shadow:0 0 8px var(--jade);animation:pulse 1.4s infinite}
+#statusPill.listening .led{background:var(--terracotta);box-shadow:0 0 8px var(--terracotta)}
+#statusPill.speaking .led{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* Subtitle */
+#subtitle{
+  position:absolute;left:50%;bottom:12px;transform:translateX(-50%) translateY(8px);
+  z-index:6;max-width:min(92%,620px);
+  padding:10px 16px;border-radius:16px;
+  background:var(--glass);backdrop-filter:blur(20px) saturate(160%);
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
+  border:1px solid var(--stroke);box-shadow:var(--shadow-sm);
+  font-size:14px;line-height:1.5;text-align:center;
+  opacity:0;pointer-events:none;transition:.3s var(--ease);
+}
+#subtitle.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#subtitle .romn{display:block;font-size:11.5px;color:var(--accent-2);
+  margin-top:3px;font-style:italic;letter-spacing:.2px}
+
+/* Character switch (floating) */
+#charSwitch{
+  position:absolute;left:10px;bottom:12px;z-index:6;display:flex;flex-direction:column;gap:6px;
+}
+.avbtn{
+  width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:19px;
+  background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--stroke);transition:.22s var(--ease);
+}
+.avbtn:hover{transform:translateX(2px);border-color:var(--stroke-hi)}
+.avbtn[aria-pressed="true"]{
+  background:linear-gradient(135deg,rgba(47,111,224,.95),rgba(27,71,168,.95));
+  border-color:transparent;box-shadow:0 5px 18px rgba(31,95,208,.5)
+}
+
+/* Expression bar */
+#exprBar{
+  position:absolute;right:10px;bottom:12px;z-index:6;display:flex;gap:5px;flex-wrap:wrap;
+  justify-content:flex-end;max-width:150px;
+}
+.exbtn{
+  width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:14px;
+  background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid var(--stroke);transition:.18s var(--ease);
+}
+.exbtn:hover{transform:translateY(-2px)}
+.exbtn[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:#fff}
+
+/* ---------- Chat panel ---------- */
+#panel{
+  display:flex;flex-direction:column;min-height:0;min-width:0;
+  background:var(--bg-1);border-left:1px solid var(--stroke);
+}
+@media (max-width:960px){#panel{border-left:none;border-top:1px solid var(--stroke)}}
+
+.tabs{display:flex;gap:2px;padding:8px 8px 0;border-bottom:1px solid var(--stroke);
+  background:var(--bg-1);flex:none}
+.tabs button{
+  flex:1 1 0;min-width:0;overflow:hidden;
+  padding:9px 4px 10px;font-size:12px;font-weight:600;color:var(--txt-2);
+  border-bottom:2px solid transparent;transition:.2s var(--ease);border-radius:8px 8px 0 0;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.tabs button:hover{color:var(--txt-1);background:var(--glass-hi)}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tabs svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+.tabs button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+@media (max-width:560px){
+  .tabs button{font-size:11px;gap:3px;padding:9px 2px 10px}
+  .brand p{display:none}
+  .brand h1{max-width:104px}
+  .brand .mark{width:30px;height:30px;font-size:17px}
+  .seg button{padding:5px 6px;font-size:11px}
+  .iconbtn{width:32px;height:32px;border-radius:10px}
+  header{gap:7px;padding:0 9px}
+  .hbtns{gap:5px}
+  #exprBar{max-width:118px}
+}
+@media (max-width:360px){ .brand h1{max-width:64px} }
+@media (max-width:340px){ .tabs button span{display:none} }
+
+.tabpanel{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  display:none;flex-direction:column}
+.tabpanel.active{display:flex}
+
+/* Messages */
+#msgs{padding:14px 14px 6px;display:flex;flex-direction:column;gap:12px}
+.msg{display:flex;gap:9px;max-width:100%;animation:rise .34s var(--ease)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.msg.me{flex-direction:row-reverse}
+.msg .av{
+  width:30px;height:30px;border-radius:10px;flex:none;display:grid;place-items:center;
+  font-size:14px;background:var(--glass-hi);border:1px solid var(--stroke)
+}
+.msg.ai .av{background:linear-gradient(140deg,var(--hakka-blue),var(--hakka-blue-deep));
+  color:#fff;border-color:transparent;font-family:var(--font-cjk);font-size:15px}
+.bub{
+  padding:10px 13px;border-radius:16px;font-size:13.5px;line-height:1.62;
+  max-width:min(100%,330px);word-wrap:break-word;overflow-wrap:anywhere;
+}
+.msg.ai .bub{background:var(--bubble-ai);border:1px solid var(--stroke);
+  border-top-left-radius:5px}
+.msg.me .bub{background:var(--bubble-me);color:#fff;border-top-right-radius:5px;
+  box-shadow:0 4px 14px rgba(31,95,208,.32)}
+.bub b,.bub strong{color:var(--accent-2);font-weight:700}
+.msg.me .bub b{color:#dce9ff}
+.bub .hak{
+  display:block;margin-top:7px;padding-top:7px;border-top:1px dashed var(--stroke-hi);
+  font-size:12px;color:var(--txt-1)
+}
+.bub .rom{color:var(--accent-2);font-style:italic}
+.bub ul{margin:6px 0 0;padding-left:17px}
+.bub li{margin:3px 0}
+.bub .src{display:block;margin-top:7px;font-size:10.5px;color:var(--txt-2)}
+.bub .cjk{font-family:var(--font-cjk)}
+.msgtools{display:flex;gap:5px;margin-top:7px}
+.msgtools button{
+  font-size:10.5px;padding:3px 8px;border-radius:7px;background:var(--glass-hi);
+  border:1px solid var(--stroke);color:var(--txt-2);transition:.18s
+}
+.msgtools button:hover{color:var(--accent);border-color:var(--stroke-hi)}
+
+.typing{display:flex;gap:4px;padding:4px 2px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--txt-2);
+  animation:bounce 1.1s infinite}
+.typing i:nth-child(2){animation-delay:.16s}
+.typing i:nth-child(3){animation-delay:.32s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}
+  30%{transform:translateY(-5px);opacity:1}}
+
+/* Suggestions */
+#suggest{display:flex;gap:6px;flex-wrap:wrap;padding:4px 14px 10px;flex:none}
+.sg{
+  padding:6px 11px;border-radius:999px;font-size:11.5px;font-weight:500;
+  background:var(--glass-hi);border:1px solid var(--stroke);color:var(--txt-1);
+  transition:.18s var(--ease);text-align:left
+}
+.sg:hover{color:var(--accent);border-color:var(--accent);transform:translateY(-1px)}
+
+/* Composer */
+#composer{
+  flex:none;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--stroke);background:var(--bg-1);
+  display:flex;gap:8px;align-items:flex-end
+}
+#inputWrap{
+  flex:1;display:flex;align-items:flex-end;gap:6px;background:var(--bg-2);
+  border:1px solid var(--stroke);border-radius:16px;padding:6px 6px 6px 13px;
+  transition:.2s var(--ease);min-width:0
+}
+#inputWrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,111,224,.16)}
+#input{
+  flex:1;background:none;border:none;outline:none;resize:none;font-size:14px;
+  line-height:1.5;max-height:110px;min-height:24px;padding:4px 0;min-width:0
+}
+#input::placeholder{color:var(--txt-2)}
+.cbtn{
+  width:34px;height:34px;border-radius:12px;display:grid;place-items:center;flex:none;
+  background:var(--glass-hi);border:1px solid var(--stroke);color:var(--txt-1);
+  transition:.2s var(--ease)
+}
+.cbtn:hover{color:var(--txt-0)}
+.cbtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+#micBtn.rec{background:var(--terracotta);color:#fff;border-color:transparent;
+  animation:recpulse 1.3s infinite}
+@keyframes recpulse{0%,100%{box-shadow:0 0 0 0 rgba(224,122,95,.55)}
+  70%{box-shadow:0 0 0 9px rgba(224,122,95,0)}}
+#sendBtn{
+  width:42px;height:42px;border-radius:14px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--hakka-blue),var(--hakka-blue-deep));color:#fff;
+  box-shadow:0 5px 16px rgba(31,95,208,.4);transition:.2s var(--ease)
+}
+#sendBtn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(31,95,208,.5)}
+#sendBtn:active{transform:scale(.94)}
+#sendBtn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+#sendBtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- Explore / Learn / Settings ---------- */
+.sect{padding:14px}
+.sect h2{margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:.7px;
+  text-transform:uppercase;color:var(--txt-2)}
+.sect p.lead{margin:0 0 12px;font-size:12px;color:var(--txt-2);line-height:1.55}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:400px){.cards{grid-template-columns:1fr}}
+.card{
+  padding:11px 12px;border-radius:14px;background:var(--bg-2);border:1px solid var(--stroke);
+  text-align:left;transition:.2s var(--ease);display:flex;flex-direction:column;gap:3px
+}
+.card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.card .ico{font-size:17px}
+.card .t{font-size:12.5px;font-weight:700}
+.card .d{font-size:10.5px;color:var(--txt-2);line-height:1.45}
+
+.phrase{
+  padding:11px 12px;border-radius:14px;background:var(--bg-2);border:1px solid var(--stroke);
+  margin-bottom:8px;transition:.2s var(--ease)
+}
+.phrase:hover{border-color:var(--stroke-hi)}
+.phrase .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.phrase .en{font-size:12.5px;font-weight:600}
+.phrase .zh{font-family:var(--font-cjk);font-size:15px;margin-top:5px;color:var(--txt-0)}
+.phrase .py{font-size:11px;color:var(--txt-2);margin-top:2px}
+.phrase .pfs{font-size:12.5px;color:var(--accent-2);font-style:italic;margin-top:4px;
+  letter-spacing:.2px}
+.phrase .say{
+  width:30px;height:30px;border-radius:10px;flex:none;display:grid;place-items:center;
+  background:var(--glass-hi);border:1px solid var(--stroke);color:var(--accent);transition:.18s
+}
+.phrase .say:hover{background:var(--accent);color:#fff;border-color:transparent}
+.phrase .say svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.lessonTabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px}
+.lessonTabs button{
+  padding:5px 10px;font-size:11px;font-weight:600;border-radius:999px;
+  background:var(--glass-hi);border:1px solid var(--stroke);color:var(--txt-2);transition:.18s
+}
+.lessonTabs button[aria-pressed="true"]{background:var(--accent);color:#fff;
+  border-color:transparent}
+
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:11px 0;border-bottom:1px solid var(--stroke)}
+.row:last-child{border-bottom:none}
+.row .lbl{font-size:12.5px;font-weight:600}
+.row .sub{font-size:10.5px;color:var(--txt-2);margin-top:2px;line-height:1.4}
+.switch{width:42px;height:24px;border-radius:999px;background:var(--bg-3);
+  border:1px solid var(--stroke);position:relative;flex:none;transition:.22s var(--ease)}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;
+  border-radius:50%;background:var(--txt-2);transition:.22s var(--ease)}
+.switch[aria-checked="true"]{background:var(--accent);border-color:transparent}
+.switch[aria-checked="true"]::after{left:21px;background:#fff}
+input[type=range]{width:120px;accent-color:var(--accent);flex:none}
+select{
+  background:var(--bg-2);border:1px solid var(--stroke);border-radius:10px;
+  padding:6px 9px;font-size:12px;outline:none;flex:none
+}
+
+.badge{display:inline-block;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;
+  background:var(--glass-hi);border:1px solid var(--stroke);color:var(--txt-2);
+  letter-spacing:.4px}
+.badge.ok{color:var(--jade);border-color:rgba(63,191,155,.4)}
+.badge.warn{color:var(--gold);border-color:rgba(242,193,78,.4)}
+.badge.err{color:var(--terracotta);border-color:rgba(224,122,95,.4)}
+
+#diag{font-size:11px;line-height:1.7;color:var(--txt-1)}
+#diag .dl{display:flex;justify-content:space-between;gap:10px;padding:4px 0;
+  border-bottom:1px dashed var(--stroke)}
+pre.testlog{
+  background:var(--bg-2);border:1px solid var(--stroke);border-radius:12px;padding:10px;
+  font-size:10.5px;line-height:1.6;max-height:230px;overflow:auto;white-space:pre-wrap;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:8px 0 0
+}
+.btn{
+  padding:9px 14px;border-radius:12px;font-size:12.5px;font-weight:600;
+  background:var(--glass-hi);border:1px solid var(--stroke);color:var(--txt-0);
+  transition:.2s var(--ease)
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:linear-gradient(135deg,var(--hakka-blue),var(--hakka-blue-deep));
+  color:#fff;border-color:transparent;box-shadow:0 5px 16px rgba(31,95,208,.35)}
+.btn.primary:hover{color:#fff;transform:translateY(-1px)}
+
+/* Toast */
+#toast{
+  position:fixed;left:50%;bottom:78px;transform:translateX(-50%) translateY(14px);
+  z-index:90;padding:10px 16px;border-radius:14px;font-size:12.5px;font-weight:600;
+  background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--stroke);box-shadow:var(--shadow);opacity:0;pointer-events:none;
+  transition:.3s var(--ease);max-width:88vw;text-align:center
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Boot overlay */
+#boot{
+  position:fixed;inset:0;z-index:100;display:grid;place-items:center;
+  background:var(--bg-0);transition:opacity .6s var(--ease),visibility .6s
+}
+#boot.hide{opacity:0;visibility:hidden}
+#boot .inner{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+#boot .bm{
+  width:74px;height:74px;border-radius:22px;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--hakka-blue),var(--hakka-blue-deep));color:#fff;
+  font-family:var(--font-cjk);font-size:38px;font-weight:700;
+  box-shadow:0 14px 44px rgba(31,95,208,.5);animation:float 2.6s ease-in-out infinite
+}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+#boot h2{margin:0;font-size:17px;font-family:var(--font-cjk)}
+#boot p{margin:0;font-size:12px;color:var(--txt-2)}
+#boot .bar{width:170px;height:3px;border-radius:3px;background:var(--bg-3);overflow:hidden}
+#boot .bar i{display:block;height:100%;width:0%;border-radius:3px;
+  background:linear-gradient(90deg,var(--hakka-blue),var(--porcelain));transition:width .3s}
+
+/* ---------- Stage overlays on small screens ---------- */
+@media (max-width:700px){
+  .stage-top{top:8px;left:8px;right:8px}
+  .chipbar{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;
+    scrollbar-width:none;max-width:calc(100% - 96px)}
+  .chipbar::-webkit-scrollbar{display:none}
+  .chip{flex:none;font-size:11px;padding:5px 10px}
+  #charSwitch{flex-direction:row;left:8px;bottom:8px;gap:5px}
+  .avbtn{width:36px;height:36px;border-radius:12px;font-size:16px}
+  #exprBar{right:8px;bottom:8px;flex-wrap:nowrap;max-width:none}
+  .exbtn{width:29px;height:29px;font-size:13px;border-radius:9px}
+  #subtitle{bottom:54px;font-size:12.5px;padding:8px 12px;border-radius:13px;max-width:94%}
+}
+#subtitle .stxt{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;
+  overflow:hidden}
+@media (max-width:700px){ #subtitle .stxt{-webkit-line-clamp:3} }
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div id="boot" role="status" aria-live="polite">
+  <div class="inner">
+    <div class="bm">客</div>
+    <h2>客家数字智能同志</h2>
+    <p id="bootMsg">Initialising AI Hakka Concierge…</p>
+    <div class="bar"><i id="bootBar"></i></div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <div class="mark" aria-hidden="true">客</div>
+      <div class="txt">
+        <h1 id="appTitle">AI Hakka Concierge</h1>
+        <p id="appSub">客家数字智能同志 · Singapore &amp; 梅州</p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="hbtns">
+      <div class="seg" role="group" aria-label="Language">
+        <button data-lang="en" aria-pressed="true">EN</button>
+        <button data-lang="zh" aria-pressed="false">中文</button>
+        <button data-lang="hak" aria-pressed="false">客家</button>
+      </div>
+      <button class="iconbtn" id="voiceBtn" title="Voice output" aria-pressed="true" aria-label="Toggle voice output">
+        <svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+      </button>
+      <button class="iconbtn" id="themeBtn" title="Toggle theme" aria-label="Toggle light or dark theme">
+        <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ================= STAGE ================= -->
+    <section id="stage" aria-label="Virtual concierge stage">
+      <canvas id="bgCanvas" aria-hidden="true"></canvas>
+      <canvas id="charCanvas" role="img" aria-label="Animated Hakka concierge character"></canvas>
+      <div id="stageVignette" aria-hidden="true"></div>
+
+      <div class="stage-top">
+        <div class="chipbar" role="group" aria-label="Background scene">
+          <button class="chip" data-scene="sg" aria-pressed="true"><span class="dot"></span><span data-t="scene.sg">Singapore Skyline</span></button>
+          <button class="chip" data-scene="tulou" aria-pressed="false"><span class="dot"></span><span data-t="scene.tulou">客家土楼</span></button>
+          <button class="chip" data-scene="lab" aria-pressed="false"><span class="dot"></span><span data-t="scene.lab">Museum Lab</span></button>
+        </div>
+      </div>
+
+      <div id="statusPill" aria-live="polite"><span class="led"></span><span id="statusTxt">Ready</span></div>
+
+      <div id="charSwitch" role="group" aria-label="Choose character">
+        <button class="avbtn" data-char="female" aria-pressed="true" title="A-Moi 阿妹" aria-label="Female concierge A-Moi">👩</button>
+        <button class="avbtn" data-char="male" aria-pressed="false" title="A-Hiung 阿雄" aria-label="Male concierge A-Hiung">👨</button>
+      </div>
+
+      <div id="exprBar" role="group" aria-label="Expression">
+        <button class="exbtn" data-expr="neutral" aria-pressed="true" title="Neutral">😐</button>
+        <button class="exbtn" data-expr="happy" aria-pressed="false" title="Happy">😊</button>
+        <button class="exbtn" data-expr="thinking" aria-pressed="false" title="Thinking">🤔</button>
+        <button class="exbtn" data-expr="surprised" aria-pressed="false" title="Surprised">😮</button>
+        <button class="exbtn" data-expr="warm" aria-pressed="false" title="Warm welcome">🥰</button>
+      </div>
+
+      <div id="subtitle" aria-live="polite"></div>
+    </section>
+
+    <!-- ================= PANEL ================= -->
+    <section id="panel" aria-label="Concierge panel">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="chat" id="tab-chat" aria-controls="pane-chat">
+          <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.9-.9L3 20.5l1.6-4.6A8.4 8.4 0 0 1 3.6 11 8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/></svg>
+          <span data-t="tab.chat">Chat</span>
+        </button>
+        <button role="tab" aria-selected="false" data-tab="explore" id="tab-explore" aria-controls="pane-explore">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m14.8 9.2-1.7 5.6-5.6 1.7 1.7-5.6z"/></svg>
+          <span data-t="tab.explore">Explore</span>
+        </button>
+        <button role="tab" aria-selected="false" data-tab="learn" id="tab-learn" aria-controls="pane-learn">
+          <svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H19v3H6.5"/></svg>
+          <span data-t="tab.learn">Learn</span>
+        </button>
+        <button role="tab" aria-selected="false" data-tab="settings" id="tab-settings" aria-controls="pane-settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+          <span data-t="tab.settings">Settings</span>
+        </button>
+      </div>
+
+      <!-- CHAT -->
+      <div class="tabpanel active" id="pane-chat" role="tabpanel" aria-labelledby="tab-chat">
+        <div id="msgs" aria-live="polite" aria-atomic="false"></div>
+        <div class="spacer"></div>
+        <div id="suggest"></div>
+      </div>
+
+      <!-- EXPLORE -->
+      <div class="tabpanel" id="pane-explore" role="tabpanel" aria-labelledby="tab-explore">
+        <div class="sect">
+          <h2 data-t="explore.h">Explore Hakka Heritage</h2>
+          <p class="lead" data-t="explore.lead">Curated, sourced knowledge on the Hakka people of Singapore and the Guangzhou–Meizhou region.</p>
+          <div class="cards" id="exploreCards"></div>
+        </div>
+        <div class="sect">
+          <h2 data-t="explore.tl">Hakka Timeline</h2>
+          <div id="timeline"></div>
+        </div>
+      </div>
+
+      <!-- LEARN -->
+      <div class="tabpanel" id="pane-learn" role="tabpanel" aria-labelledby="tab-learn">
+        <div class="sect">
+          <h2 data-t="learn.h">Learn Hakka 学客家话</h2>
+          <p class="lead" data-t="learn.lead">Meixian (梅县) Hakka with Pha̍k-fa-sṳ romanisation. Tap the speaker to hear a best-effort rendering.</p>
+          <div class="lessonTabs" id="lessonTabs" role="group" aria-label="Lesson category"></div>
+          <div id="phrases"></div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="tabpanel" id="pane-settings" role="tabpanel" aria-labelledby="tab-settings">
+        <div class="sect">
+          <h2 data-t="set.appearance">Appearance</h2>
+          <div class="row">
+            <div><div class="lbl" data-t="set.theme">Theme</div><div class="sub" data-t="set.themeSub">Dark is the default.</div></div>
+            <div class="switch" id="swTheme" role="switch" aria-checked="true" tabindex="0" aria-label="Dark theme"></div>
+          </div>
+          <div class="row">
+            <div><div class="lbl" data-t="set.subs">Stage subtitles</div><div class="sub" data-t="set.subsSub">Show what the concierge is saying on stage.</div></div>
+            <div class="switch" id="swSubs" role="switch" aria-checked="true" tabindex="0" aria-label="Subtitles"></div>
+          </div>
+          <div class="row">
+            <div><div class="lbl" data-t="set.motion">Animation quality</div><div class="sub" data-t="set.motionSub">Lower this on older phones to save battery.</div></div>
+            <select id="selQuality">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div class="row">
+            <div><div class="lbl" data-t="set.physics">Hair &amp; cloth physics</div><div class="sub" data-t="set.physicsSub">Verlet simulation on hair strands and clothing hems.</div></div>
+            <div class="switch" id="swPhysics" role="switch" aria-checked="true" tabindex="0" aria-label="Physics"></div>
+          </div>
+        </div>
+        <div class="sect">
+          <h2 data-t="set.voice">Voice</h2>
+          <div class="row">
+            <div><div class="lbl" data-t="set.tts">Speak replies</div><div class="sub" data-t="set.ttsSub">Uses your device's built-in speech engine.</div></div>
+            <div class="switch" id="swTts" role="switch" aria-checked="true" tabindex="0" aria-label="Speak replies"></div>
+          </div>
+          <div class="row">
+            <div><div class="lbl" data-t="set.rate">Speech rate</div><div class="sub"><span id="rateVal">1.00</span>×</div></div>
+            <input type="range" id="rngRate" min="0.6" max="1.4" step="0.05" value="1">
+          </div>
+          <div class="row">
+            <div><div class="lbl" data-t="set.pitch">Speech pitch</div><div class="sub"><span id="pitchVal">1.05</span></div></div>
+            <input type="range" id="rngPitch" min="0.6" max="1.6" step="0.05" value="1.05">
+          </div>
+          <div class="row">
+            <div><div class="lbl" data-t="set.hakvoice">Hakka voice fallback</div><div class="sub" data-t="set.hakvoiceSub">No browser ships a Hakka voice. Hakka lines are spoken with the closest Chinese voice and always shown with Pha̍k-fa-sṳ romanisation.</div></div>
+            <span class="badge warn">FALLBACK</span>
+          </div>
+        </div>
+        <div class="sect">
+          <h2 data-t="set.diag">Diagnostics</h2>
+          <div id="diag"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn primary" id="runTests" data-t="set.run">Run self-test</button>
+            <button class="btn" id="resetBtn" data-t="set.reset">Reset conversation</button>
+          </div>
+          <pre class="testlog" id="testLog" hidden></pre>
+        </div>
+        <div class="sect">
+          <h2 data-t="set.about">About &amp; Sources</h2>
+          <p class="lead" id="aboutTxt"></p>
+        </div>
+      </div>
+
+      <div id="composer">
+        <div id="inputWrap">
+          <textarea id="input" rows="1" placeholder="Ask about Hakka history, food, tulou…" aria-label="Message the concierge"></textarea>
+          <button class="cbtn" id="micBtn" title="Voice input" aria-label="Speak your question">
+            <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v4"/></svg>
+          </button>
+        </div>
+        <button id="sendBtn" title="Send" aria-label="Send message">
+          <svg viewBox="0 0 24 24"><path d="m4 12 16-8-5.5 16L12 13z"/><path d="m12 13 8-9"/></svg>
+        </button>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+"use strict";
+/* ============================================================================
+   AI HAKKA CONCIERGE  ·  客家数字智能同志
+   Offline, single-file, dependency-free.
+   Modules: Store · I18N · KB · NLU · Speech · Scenes · Character · UI · Tests
+   ========================================================================== */
+
+/* ------------------------------ 0. Utilities ----------------------------- */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp  = (a, b, t) => a + (b - a) * t;
+const rand  = (a, b) => a + Math.random() * (b - a);
+const TAU   = Math.PI * 2;
+const now   = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+
+/** Deterministic 32-bit hash — used for stable pseudo-random visemes. */
+function hash32(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return h >>> 0;
+}
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+/** Minimal, safe markup: **bold** only. Everything else is escaped. */
+function fmt(s) {
+  return escapeHTML(s).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
+}
+function debounce(fn, ms) {
+  let t; return function () { clearTimeout(t); const a = arguments, c = this;
+    t = setTimeout(() => fn.apply(c, a), ms); };
+}
+
+/* ------------------------------ 1. State --------------------------------- */
+/* In-memory only: the app is designed to run from a file:// URL where browser
+   storage may be unavailable or blocked. Nothing is persisted or transmitted. */
+const S = {
+  lang: "en",              // en | zh | hak
+  character: "female",     // female | male
+  scene: "sg",             // sg | tulou | lab
+  theme: "dark",
+  expression: "warm",
+  quality: "medium",
+  physics: true,
+  subtitles: true,
+  tts: true,
+  rate: 1.0,
+  pitch: 1.05,
+  speaking: false,
+  listening: false,
+  busy: false,
+  history: [],
+  lessonCat: "greetings",
+  reducedMotion: (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) || false
+};
+
+/* ------------------------------ 2. I18N ---------------------------------- */
+const UI = {
+  en: {
+    "app.title": "AI Hakka Concierge",
+    "app.sub": "客家数字智能同志 · Singapore & 梅州",
+    "tab.chat": "Chat", "tab.explore": "Explore", "tab.learn": "Learn", "tab.settings": "Settings",
+    "scene.sg": "Singapore Skyline", "scene.tulou": "Hakka Tulou 土楼", "scene.lab": "Museum Lab",
+    "explore.h": "Explore Hakka Heritage",
+    "explore.lead": "Curated, sourced knowledge on the Hakka people of Singapore and the Guangzhou–Meizhou region.",
+    "explore.tl": "Hakka Timeline",
+    "learn.h": "Learn Hakka · 学客家话",
+    "learn.lead": "Meixian (梅县) Hakka with Pha̍k-fa-sṳ romanisation. Tap the speaker for a best-effort rendering.",
+    "set.appearance": "Appearance", "set.theme": "Dark theme", "set.themeSub": "Dark is the default.",
+    "set.subs": "Stage subtitles", "set.subsSub": "Show what the concierge is saying on stage.",
+    "set.motion": "Animation quality", "set.motionSub": "Lower this on older phones to save battery.",
+    "set.physics": "Hair & cloth physics", "set.physicsSub": "Verlet simulation on hair strands and clothing hems.",
+    "set.voice": "Voice", "set.tts": "Speak replies", "set.ttsSub": "Uses your device's built-in speech engine.",
+    "set.rate": "Speech rate", "set.pitch": "Speech pitch",
+    "set.hakvoice": "Hakka voice fallback",
+    "set.hakvoiceSub": "No browser ships a Hakka voice. Hakka lines use the closest Chinese voice and always show Pha̍k-fa-sṳ romanisation.",
+    "set.diag": "Diagnostics", "set.run": "Run self-test", "set.reset": "Reset conversation",
+    "set.about": "About & Sources",
+    "ph.input": "Ask about Hakka history, food, tulou…",
+    "st.ready": "Ready", "st.listening": "Listening…", "st.speaking": "Speaking", "st.thinking": "Thinking…",
+    "toast.nomic": "Speech recognition is not available in this browser. Please type instead.",
+    "toast.notts": "No speech voice found on this device. Replies will be text-only.",
+    "toast.micdenied": "Microphone permission was denied.",
+    "toast.copied": "Copied to clipboard.",
+    "toast.reset": "Conversation reset.",
+    "lbl.replay": "Replay", "lbl.copy": "Copy",
+    "cat.greetings": "Greetings", "cat.food": "Food", "cat.family": "Family",
+    "cat.travel": "Getting around", "cat.numbers": "Numbers", "cat.culture": "Culture"
+  },
+  zh: {
+    "app.title": "客家数字智能同志",
+    "app.sub": "AI Hakka Concierge · 新加坡与梅州",
+    "tab.chat": "对话", "tab.explore": "探索", "tab.learn": "学习", "tab.settings": "设置",
+    "scene.sg": "新加坡天际线", "scene.tulou": "客家土楼", "scene.lab": "未来博物馆",
+    "explore.h": "探索客家文化",
+    "explore.lead": "关于新加坡与广州—梅州地区客家人的精选资料，均有出处。",
+    "explore.tl": "客家大事年表",
+    "learn.h": "学客家话",
+    "learn.lead": "以梅县客家话为准，附白话字（Pha̍k-fa-sṳ）拼音。点击喇叭可试听（近似发音）。",
+    "set.appearance": "外观", "set.theme": "深色主题", "set.themeSub": "默认使用深色。",
+    "set.subs": "舞台字幕", "set.subsSub": "在舞台上显示同志所说的话。",
+    "set.motion": "动画质量", "set.motionSub": "旧手机可调低以省电。",
+    "set.physics": "头发与衣物物理", "set.physicsSub": "对发丝与衣摆使用 Verlet 物理模拟。",
+    "set.voice": "语音", "set.tts": "朗读回覆", "set.ttsSub": "使用您设备内置的语音引擎。",
+    "set.rate": "语速", "set.pitch": "音调",
+    "set.hakvoice": "客家话语音替代方案",
+    "set.hakvoiceSub": "浏览器没有客家话语音。客家话会以最接近的中文语音朗读，并始终显示白话字拼音。",
+    "set.diag": "诊断", "set.run": "运行自检", "set.reset": "重置对话",
+    "set.about": "关于与资料来源",
+    "ph.input": "问我客家历史、美食、土楼…",
+    "st.ready": "就绪", "st.listening": "聆听中…", "st.speaking": "讲话中", "st.thinking": "思考中…",
+    "toast.nomic": "此浏览器不支持语音识别，请改用文字输入。",
+    "toast.notts": "此设备未找到语音引擎，将只显示文字。",
+    "toast.micdenied": "麦克风权限被拒绝。",
+    "toast.copied": "已复制。",
+    "toast.reset": "对话已重置。",
+    "lbl.replay": "重播", "lbl.copy": "复制",
+    "cat.greetings": "问候", "cat.food": "饮食", "cat.family": "家人",
+    "cat.travel": "出行", "cat.numbers": "数字", "cat.culture": "文化"
+  },
+  hak: {
+    "app.title": "客家数字智能同志",
+    "app.sub": "Hak-kâ Sṳ-vi Chṳ-nèn Thùng-chṳ",
+    "tab.chat": "讲话", "tab.explore": "看看", "tab.learn": "学话", "tab.settings": "设定",
+    "scene.sg": "新加坡天际线", "scene.tulou": "客家土楼", "scene.lab": "未来博物馆",
+    "explore.h": "看客家文化",
+    "explore.lead": "关于新加坡㧯广州—梅州客家人个资料，逐条有出处。",
+    "explore.tl": "客家大事年表",
+    "learn.h": "学客家话 Hok Hak-kâ-fa",
+    "learn.lead": "梅县客家话，配白话字 Pha̍k-fa-sṳ。㩒喇叭听近似发音。",
+    "set.appearance": "外观", "set.theme": "深色主题", "set.themeSub": "默认深色。",
+    "set.subs": "舞台字幕", "set.subsSub": "在舞台顶显示讲个话。",
+    "set.motion": "动画质量", "set.motionSub": "旧手机调低较省电。",
+    "set.physics": "头那毛㧯衫裤物理", "set.physicsSub": "对发丝㧯衫摆做 Verlet 模拟。",
+    "set.voice": "声音", "set.tts": "读出回覆", "set.ttsSub": "用你设备内底个语音引擎。",
+    "set.rate": "讲话快慢", "set.pitch": "声调高低",
+    "set.hakvoice": "客家话声音替代",
+    "set.hakvoiceSub": "浏览器无客家话声音。客家话会用最相近个中文声音读出，并且一定显示白话字。",
+    "set.diag": "诊断", "set.run": "行自检", "set.reset": "重设讲话",
+    "set.about": "关于㧯出处",
+    "ph.input": "问𠊎客家历史、食个、土楼…",
+    "st.ready": "好势", "st.listening": "听等…", "st.speaking": "讲等", "st.thinking": "想等…",
+    "toast.nomic": "这个浏览器无支持声音识别，请打字。",
+    "toast.notts": "这个设备寻毋到语音引擎，只会显示字。",
+    "toast.micdenied": "麦克风权限分人拒绝哩。",
+    "toast.copied": "复制好哩。",
+    "toast.reset": "讲话重设好哩。",
+    "lbl.replay": "再听", "lbl.copy": "复制",
+    "cat.greetings": "问好", "cat.food": "食个", "cat.family": "屋家人",
+    "cat.travel": "行路", "cat.numbers": "数目", "cat.culture": "文化"
+  }
+};
+const T = (k) => (UI[S.lang] && UI[S.lang][k]) || UI.en[k] || k;
+
+/* ------------------------- 3. Knowledge base ----------------------------- */
+/* Every entry is hand-curated from the sources listed in SOURCES below.
+   Nothing here is generated at runtime, so the concierge cannot hallucinate. */
+
+const SOURCES = {
+  nlb:  "National Library Board Singapore, Infopedia — “Hakka community”",
+  ccc:  "Singapore Chinese Cultural Centre, Culturepaedia — “Hakka clan associations in Singapore”",
+  roots:"Roots.gov.sg / National Heritage Board — Ying Fo Fui Kun, Char Yong (Dabu) Association",
+  yffk: "Ying Fo Fui Kun official history",
+  tcg:  "TravelChinaGuide — Meizhou city guide",
+  cd:   "China Daily Guangdong — “Meizhou, capital of Hakka culture”",
+  un:   "UNESCO World Heritage Centre — Fujian Tulou (inscribed 2008)",
+  nhf:  "Nanyang Hakka Federation (南洋客属总会) / Singapore Federation of Chinese Clan Associations",
+  whc:  "World Hakka Conference 世界客属恳亲大会"
+};
+
+const KB = [
+/* ---------------------------- IDENTITY ---------------------------------- */
+{
+  id:"who", cat:"history", icon:"🧭",
+  k:["who are the hakka","what is hakka","hakka people","define hakka","hakka meaning","guest families","origin of hakka",
+     "客家","客家人","什么是客家","客家是什么","客家人是谁","客家由来","么个係客家","脉个係客家"],
+  title:{en:"Who are the Hakka?",zh:"客家人是谁？",hak:"客家人係脉人？"},
+  body:{
+    en:"**Hakka (客家)** literally means “guest families”. They are a Han Chinese people defined not by one province but by a shared migration history: successive waves moved south from the Central Plains — Henan and Shanxi — during the upheavals of the Tang, Song, Yuan and Ming eras, settling in the hill country where **Guangdong, Fujian and Jiangxi** meet. Because the fertile valleys were already taken, they farmed hillsides, built fortified communal houses, and developed a famously mobile, education-minded culture that later spread across Southeast Asia and the world.",
+    zh:"**客家**字面意思是「作客的人家」。客家人是汉族的一支，其身份不是由某一个省份界定，而是由共同的迁徙历史所塑造：从唐、宋、元、明的动乱中，一波波先民由中原（河南、山西一带）南迁，最终定居在**广东、福建、江西**三省交界的山区。肥沃的河谷早已有人耕作，客家人只好开垦山坡、兴建可防卫的集体住屋，并逐渐形成勤俭、重视教育、善于迁徙的文化，后来更远播南洋与世界各地。",
+    hak:"**客家**个意思就係「做客个人家」。客家人係汉人个一支，毋係靠省份来分，係靠共下个迁徙历史：唐、宋、元、明乱世个时节，一批一批人对中原（河南、山西）向南行，最尾住落**广东、福建、江西**三省交界个山区。好田早就分人占忒哩，客家人就开山种地、起围屋土楼，慢慢养出勤俭、重读书、敢出外个性格，后来行遍南洋㧯全世界。"
+  },
+  rom:"Hak-kâ-ngìn he Chûng-ngièn nàm-hàng ke Hon-ngìn.",
+  src:["nlb"]
+},
+{
+  id:"migration", cat:"history", icon:"🧳",
+  k:["migration","waves","when did hakka migrate","hakka history timeline","移民","迁徙","南迁","五次大迁徙","几时来"],
+  title:{en:"The great Hakka migrations",zh:"客家五次大迁徙",hak:"客家五摆大迁徙"},
+  body:{
+    en:"Hakka historians conventionally count **five great southward migrations**: from the fall of the Western Jin (4th c.), through the An Lushan rebellion (8th c.), the Song court's flight south (12th–13th c.), the Ming–Qing transition (17th c.), and finally the 19th-century dispersal that followed population pressure, the Hakka–Punti clan wars in Guangdong and the Taiping upheaval. That last wave is the one that carried Hakka families to **Singapore, Malaya, Borneo, Taiwan, Mauritius, the Caribbean and the Americas**.",
+    zh:"客家史家一般把南迁分为**五次大迁徙**：西晋末年（四世纪）、安史之乱（八世纪）、宋室南渡（十二至十三世纪）、明清易代（十七世纪），以及十九世纪因人口压力、广东土客械斗与太平天国动荡而起的最后一波。正是最后这一波，把客家家族带到了**新加坡、马来亚、婆罗洲、台湾、毛里求斯、加勒比海与美洲**。",
+    hak:"讲客家南迁，一般算**五摆大迁徙**：西晋尾（四世纪）、安史之乱（八世纪）、宋朝南渡（十二到十三世纪）、明清换代（十七世纪），最尾係十九世纪，因为人多田少、广东土客相㓾㧯太平天国乱世。就係这最尾一摆，将客家人带到**新加坡、马来亚、婆罗洲、台湾、毛里求斯、加勒比海㧯美洲**。"
+  },
+  rom:"Ńg-pái thai chhiên-sí.",
+  src:["nlb"]
+},
+
+/* ---------------------------- SINGAPORE --------------------------------- */
+{
+  id:"sg_history", cat:"singapore", icon:"🇸🇬",
+  k:["hakka in singapore","singapore hakka","when did hakka come to singapore","singapore history","how many hakka in singapore","hakka population singapore",
+     "新加坡客家","新加坡客家人","新加坡的客家人","客家人几时到新加坡","新加坡客家人口","新加坡个客家人"],
+  title:{en:"The Hakka in Singapore",zh:"新加坡的客家人",hak:"新加坡个客家人"},
+  body:{
+    en:"Hakka migrants were among the earliest Chinese settlers in Singapore, present from the **early 19th century**, soon after the port was founded. They came mainly from **Jiaying prefecture (嘉应州, today's Meizhou/Meixian), Dabu (大埔), Huizhou (惠州) and Fengshun (丰顺)**. By the 2010 census the Hakka made up about **8% of Singapore's Chinese resident population**, the fourth-largest dialect group after the Hokkien, Teochew and Cantonese. Though smaller in number, their footprint on Singapore's institutions, medicine halls, pawnshops and politics is out of all proportion to their size.",
+    zh:"客家人是最早南来新加坡的华人之一，**十九世纪初**开埠不久便已抵达。他们主要来自**嘉应州（今梅州、梅县）、大埔、惠州与丰顺**。据 2010 年人口普查，客家人约占**新加坡华族人口的 8%**，是继福建、潮州、广府之后的第四大方言群。人数虽不算多，但在中药业、当铺业、社团与政坛上的影响力，远远超过其人口比例。",
+    hak:"客家人係最早来新加坡个华人之一，**十九世纪头**开埠无几久就到哩。多数係对**嘉应州（今晡日个梅州、梅县）、大埔、惠州㧯丰顺**来。照 2010 年人口普查，客家人占**新加坡华人个 8% 左右**，係福建、潮州、广府以后第四大个方言群。人数虽然毋多，总係在中药行、当铺、社团㧯政坛个影响力，远远大过佢等个人口比例。"
+  },
+  rom:"Hak-kâ-ngìn hó-chó chhiu lòi-to Sîn-kâ-phô lé.",
+  src:["nlb"]
+},
+{
+  id:"sg_assoc", cat:"singapore", icon:"🏛️",
+  k:["clan association","ying fo fui kun","char yong","dabu","nanyang khek","hakka federation","foong shoon","eng teng","wui chiu","huiz hou","association singapore","会馆",
+     "应和会馆","茶阳","大埔","南洋客属总会","丰顺会馆","客属","惠州会馆","永定会馆"],
+  title:{en:"Hakka clan associations in Singapore",zh:"新加坡的客家会馆",hak:"新加坡个客家会馆"},
+  body:{
+    en:"Clan associations were the Hakka safety net — burial, schooling, jobs, arbitration. The landmarks:\n• **Ying Fo Fui Kun 应和会馆 (1822)** — founded by Liu Runde for Jiaying-prefecture Hakka; Singapore's oldest surviving Hakka association, gazetted a **National Monument in 1998**, and founder of **Yin Sin School (养正学校, 1905)**.\n• **Wui Chiu Fui Kun 惠州会馆 (1822)** — for Huizhou Hakka.\n• **Char Yong (Dabu) Association 茶阳（大埔）会馆 (1858)** — for Dabu county folk; runs a Hakka heritage gallery.\n• **Foong Shoon Fui Kuan 丰顺会馆 (1873)** and **Eng Teng Association 永定会馆 (1918)**.\n• **Nanyang Khek Community Guild 南洋客属总会 (1929)** — the umbrella body, **renamed the Nanyang Hakka Federation in 2020**.\nAround **19 Hakka organisations** are registered under the Singapore Federation of Chinese Clan Associations.",
+    zh:"会馆是客家人的社会保障——治丧、办学、介绍工作、排解纠纷。主要的有：\n• **应和会馆（1822）**——由刘润德倡建，为嘉应州客家人而设；新加坡现存最早的客家会馆，**1998 年列为国家古迹**，并于 **1905 年创办养正学校**。\n• **惠州会馆（1822）**——惠州客家人所设。\n• **茶阳（大埔）会馆（1858）**——大埔同乡会馆，设有客家文物馆。\n• **丰顺会馆（1873）**与**永定会馆（1918）**。\n• **南洋客属总会（1929）**——统合各帮的总会，**2020 年更名为「南洋客属总会 Nanyang Hakka Federation」**。\n目前在新加坡宗乡会馆联合总会之下，约有**十九个客属团体**。",
+    hak:"会馆就係客家人个靠山——办丧事、办学堂、寻头路、解纠纷。主要个有：\n• **应和会馆（1822）**——刘润德带头起个，係嘉应州客家人个会馆；新加坡现存最早个客家会馆，**1998 年列做国家古迹**，**1905 年办养正学校**。\n• **惠州会馆（1822）**——惠州客家人个。\n• **茶阳（大埔）会馆（1858）**——大埔同乡个会馆，内底有客家文物馆。\n• **丰顺会馆（1873）**㧯**永定会馆（1918）**。\n• **南洋客属总会（1929）**——总个会馆，**2020 年改名做南洋客属总会 Nanyang Hakka Federation**。\n今晡日在宗乡总会下背，大约有**十九个客属团体**。"
+  },
+  rom:"Yin-fò Fùi-kôn he chui-ló ke fui-kón.",
+  src:["ccc","roots","nlb"]
+},
+{
+  id:"sg_people", cat:"singapore", icon:"⭐",
+  k:["famous hakka","notable hakka","lee kuan yew","aw boon haw","tiger balm","hakka celebrities","who is famous",
+     "名人","著名客家人","李光耀","胡文虎","虎标万金油"],
+  title:{en:"Notable Hakka Singaporeans",zh:"著名的新加坡客家人",hak:"出名个新加坡客家人"},
+  body:{
+    en:"**Lee Kuan Yew (李光耀)**, Singapore's founding Prime Minister, was a Singapore-born Hakka whose ancestors came from Dabu. **Aw Boon Haw (胡文虎)**, the “Tiger Balm King”, built a Chinese-medicine empire and a reputation as one of the region's great philanthropists — Haw Par Villa in Pasir Panjang is his legacy. Hakka families have also long been prominent in Singapore's **Chinese medicine trade, pawnbroking and goldsmithing**, three sectors they came close to dominating in the colonial era.",
+    zh:"**李光耀**——新加坡开国总理，土生土长的客家人，祖籍大埔。**胡文虎**——「万金油大王」，创立中药业王国，也是南洋著名的大慈善家，巴西班让的虎豹别墅便是其遗泽。客家家族在新加坡的**中药业、当铺业与打金业**中长期居于要角，殖民地时期几乎为客家人所主导。",
+    hak:"**李光耀**——新加坡开国总理，在新加坡出世个客家人，祖籍大埔。**胡文虎**——「万金油大王」，做出一大片中药生理，又係南洋出名个大善人，巴西班让个虎豹别墅就係佢留下个。客家人在新加坡个**中药行、当铺㧯打金店**长透係大角色，殖民地时代差毋多分客家人包忒。"
+  },
+  rom:"Lî Kông-yeu lâu Fù Vùn-fú he Hak-kâ-ngìn.",
+  src:["nlb"]
+},
+{
+  id:"sg_trades", cat:"singapore", icon:"⚒️",
+  k:["hakka trades","occupation","jobs","pepper gambier","chinese medicine","pawnshop","goldsmith","what did hakka do",
+     "行业","职业","胡椒","甘蜜","中药","当铺","打金"],
+  title:{en:"Hakka trades in old Singapore",zh:"早期新加坡客家人的行业",hak:"早期新加坡客家人做个生理"},
+  body:{
+    en:"The first Hakka arrivals worked **pepper and gambier plantations** in Singapore's interior — hard, remote, low-status work. As the plantations gave way to the city, Hakka families moved decisively into **Chinese medicine halls (中药行), pawnbroking (当铺) and goldsmithing**, trades built on trust, literacy and tight kin networks. Hakka women were noted for working alongside men, including on construction sites, wearing distinctive blue or grey headgear.",
+    zh:"最早南来的客家人多在新加坡内陆种**胡椒与甘蜜**——地处偏远、辛苦而地位不高。随着种植园让位给城市，客家家族大举转入**中药行、当铺与打金业**，这些行业靠的是信誉、识字与紧密的同乡网络。客家妇女以能与男子同工著称，甚至上建筑工地，头戴蓝色或灰色头巾。",
+    hak:"最早来个客家人多数在新加坡内陆种**胡椒㧯甘蜜**——地方远、工夫苦、地位又低。等到种植园分城市食忒，客家人就大举转去做**中药行、当铺㧯打金**，这兜行业靠个係信用、识字㧯同乡个网络。客家妇人家出名会做，同男仔共下做工，连起屋个工地都上，头那包蓝色抑係灰色个头巾。"
+  },
+  rom:"Chûng-yo̍k-hòng, tông-phu lâu tá-kîm.",
+  src:["nlb"]
+},
+{
+  id:"sg_places", cat:"singapore", icon:"📍",
+  k:["hakka places singapore","hakka trail","where to visit","heritage sites","haw par villa","shuang long shan","telok ayer","visit singapore hakka",
+     "新加坡客家景点","去哪里","参观","双龙山","虎豹别墅","客家文物馆"],
+  title:{en:"A Hakka trail through Singapore",zh:"新加坡客家足迹之旅",hak:"新加坡客家行脚"},
+  body:{
+    en:"A half-day route:\n• **Ying Fo Fui Kun, 98 Telok Ayer Street** — a National Monument since 1998, a serene Qing-style hall right in the CBD.\n• **Shuang Long Shan Cemetery & Memorial Hall (双龙山), Holland Road** — the association's ancestral burial ground, still used for Qing Ming rites.\n• **Char Yong (Dabu) Association heritage gallery** — Dabu artefacts, photographs and clan records.\n• **Haw Par Villa, Pasir Panjang** — Aw Boon Haw's extraordinary tableau garden, free to enter.\n• **A yong tau foo stall in any hawker centre** — the most everyday Hakka monument of them all.",
+    zh:"半日路线：\n• **应和会馆（直落亚逸街 98 号）**——1998 年列为国家古迹，闹市中的清式会馆。\n• **双龙山亭与坟山（荷兰路）**——应和会馆的义山，至今仍在此举行清明祭祖。\n• **茶阳（大埔）会馆文物馆**——大埔文物、老照片与会馆档案。\n• **虎豹别墅（巴西班让）**——胡文虎所建的奇观园林，免费入场。\n• **任何一档酿豆腐摊**——这才是最日常的客家「古迹」。",
+    hak:"半日个路线：\n• **应和会馆（直落亚逸街 98 号）**——1998 年列做国家古迹，闹市中间个清式会馆。\n• **双龙山亭㧯坟山（荷兰路）**——应和会馆个义山，今晡日还在该做清明祭祖。\n• **茶阳（大埔）会馆文物馆**——大埔个老物件、老相片㧯会馆记录。\n• **虎豹别墅（巴西班让）**——胡文虎起个奇景花园，免钱入。\n• **随便一档酿豆腐摊**——这正係最日常个客家「古迹」。"
+  },
+  rom:"Hàng-kín Sîn-kâ-phô ke Hak-kâ ku-chiak.",
+  src:["roots","nlb"]
+},
+
+/* ---------------------------- CHINA ------------------------------------- */
+{
+  id:"meizhou", cat:"china", icon:"🏯",
+  k:["meizhou","meixian","world hakka capital","梅州","梅县","世界客都","嘉应","hakka capital","where is meizhou"],
+  title:{en:"Meizhou 梅州 — capital of the Hakka world",zh:"梅州——世界客都",hak:"梅州——世界客都"},
+  body:{
+    en:"**Meizhou (梅州)**, in north-eastern Guangdong where the province meets Fujian and Jiangxi, styles itself the **“World Hakka Capital” (世界客都)**. It has roughly **4.38 million residents** across some 15,900 km², and preserves **more than 20,000 traditional Hakka enclosed houses**. Historically it was **Jiaying prefecture (嘉应州)** — the ancestral home of a very large share of Singapore's Hakka. The **Meixian (梅县) variety of Hakka is treated as the prestige standard**, and the city hosts the **China Hakka Museum** as well as the 1,200-year-old **Lingguang Temple (灵光寺)**.",
+    zh:"**梅州**位于广东东北部，与福建、江西交界，自称**「世界客都」**。全市约**438 万人**，面积约 1.59 万平方公里，保存**两万多座传统客家围屋**。历史上此地即**嘉应州**——新加坡相当大一部分客家人的祖籍地。**梅县话被视为客家话的标准音**，市内设有**中国客家博物馆**，以及有一千二百多年历史的**灵光寺**。",
+    hak:"**梅州**在广东东北，同福建、江西交界，自家喊做**「世界客都」**。全市大约**438 万人**，一万五千九百几平方公里，还保存**两万几座围龙屋**。旧时喊做**嘉应州**——新加坡好多客家人个祖籍就在这。**梅县话分人当做客家话个标准音**，市内有**中国客家博物馆**，还有一千两百几年个**灵光寺**。"
+  },
+  rom:"Mòi-chû he Sṳ-kie Hak-tû.",
+  src:["tcg","cd"]
+},
+{
+  id:"guangzhou", cat:"china", icon:"🌆",
+  k:["guangzhou","canton","zengcheng","huadu","conghua","pearl river","广州","增城","花都","从化","广府"],
+  title:{en:"Hakka in Guangzhou and the Pearl River Delta",zh:"广州与珠三角的客家人",hak:"广州㧯珠三角个客家人"},
+  body:{
+    en:"Guangzhou is a **Cantonese-speaking city with substantial Hakka pockets**, concentrated in the hillier outer districts — **Zengcheng (增城), Huadu (花都) and Conghua (从化)** — where Hakka villages, ancestral halls and enclosed houses survive within an hour or two of the city centre. Guangzhou also matters to Hakka history as the **provincial capital and the port of departure**: for generations, Hakka families from Meizhou travelled down the Mei and East Rivers to Guangzhou or Shantou before boarding steamers for Nanyang. Today it is the natural gateway for a Singapore visitor heading up to Meizhou.",
+    zh:"广州是**以粤语为主的城市，但也有相当规模的客家聚落**，集中在山地较多的外围区——**增城、花都、从化**——距市中心一两小时车程之内，仍可见客家村落、祠堂与围屋。广州对客家史的意义还在于它是**省城与出洋口岸**：几代梅州客家人顺梅江、东江而下，经广州或汕头登轮南渡。今天，它也是新加坡旅客北上梅州最顺理成章的门户。",
+    hak:"广州係**讲广府话为主个城市，总係也有毋少客家庄**，多数在山较多个外围区——**增城、花都、从化**——离市中心一两点钟车程，还看得到客家村、祠堂㧯围屋。广州对客家史还有一层意义：佢係**省城㧯出洋个口岸**。几代梅州客家人顺梅江、东江落来，经广州抑係汕头上船去南洋。今晡日，佢也係新加坡人上梅州最顺路个门户。"
+  },
+  rom:"Kóng-chû yû Hak-kâ-chông chhai Chên-sṳ̀n, Fâ-tû, Chhiùng-fa."
+},
+{
+  id:"tulou", cat:"architecture", icon:"🛕",
+  k:["tulou","earth building","round house","fujian tulou","unesco","土楼","圆楼","福建土楼","花萼楼","泰安楼","什么是土楼"],
+  title:{en:"Tulou 土楼 — the earthen fortress house",zh:"土楼——夯土的堡垒之家",hak:"土楼——夯泥个堡垒屋"},
+  body:{
+    en:"A **tulou (土楼, “earth building”)** is a communal rammed-earth house, usually circular or square, rising three to five storeys around an open courtyard. The outer wall — up to two metres thick at the base, with no ground-floor windows and a single reinforced gate — made it a fortress; inside, dozens of families of one lineage lived in identical wedge-shaped rooms, sharing a well, a kitchen level and an ancestral hall. The **Fujian Tulou** were inscribed on the **UNESCO World Heritage List in 2008** (46 buildings in ten sites). Guangdong has its own celebrated examples in **Dabu county — the round Huae Lou (花萼楼) and the square stone Taian Lou (泰安楼)** — both within reach of Meizhou.",
+    zh:"**土楼**是夯土建成的集体住宅，多为圆形或方形，三至五层围绕天井而立。外墙墙基厚达两米，底层不开窗，只设一道加固大门，形同堡垒；楼内数十户同宗人家住在同样的扇形房间，共用水井、厨房层与祖堂。**福建土楼于 2008 年列入联合国教科文组织世界遗产名录**（十处共 46 座）。广东亦有名作，如**大埔的圆形花萼楼与方形石构泰安楼**，皆在梅州可达范围之内。",
+    hak:"**土楼**係用夯泥起个集体屋，多数係圆个抑係四方个，三到五层围等一个天井。外墙脚下厚到两米，底层无窗，单单一只大门，就係一座堡垒；楼内几十户同宗个人家住一样个扇形房，共下用一口井、一层灶下㧯一间祖堂。**福建土楼 2008 年列入联合国世界遗产**（十处共 46 座）。广东也有出名个，像**大埔个圆花萼楼㧯四方石头个泰安楼**，对梅州去都无远。"
+  },
+  rom:"Thú-lèu he yung nàng-nì tap-hí ke thai-vuk.",
+  src:["un","tcg"]
+},
+{
+  id:"weilongwu", cat:"architecture", icon:"🏘️",
+  k:["weilongwu","wei long","enclosed house","围龙屋","围屋","semi circular","dragon house","meizhou architecture"],
+  title:{en:"Weilongwu 围龙屋 — Meizhou's dragon-embracing house",zh:"围龙屋——梅州的半月形民居",hak:"围龙屋——梅州个半月形屋"},
+  body:{
+    en:"Where Fujian built round tulou, **Meizhou built the weilongwu (围龙屋)** — a rectangular hall-and-courtyard core with **semi-circular arcs of rooms curving behind it**, and a crescent-shaped pond in front. Seen from the hillside it reads as a coiled dragon embracing the family. The raised ground between hall and arc, the **huatai (化胎)**, is deliberately left unpaved: it is the “womb” of the house in fengshui terms. Meizhou preserves **over 20,000** of them — the densest concentration anywhere.",
+    zh:"福建起圆土楼，**梅州则建围龙屋**——前为长方形的堂横屋，**后有半圆形的围屋层层弧抱**，屋前一弯半月形池塘。自山坡望下去，宛如一条盘龙将家族环抱其中。堂与围之间那片隆起的空地称**「化胎」**，特意不铺石板，风水上视为屋宅的「胎息」。梅州保存此类民居**两万余座**，密度冠绝各地。",
+    hak:"福建起圆土楼，**梅州就起围龙屋**——头前係四方个堂横屋，**后背有半圆个围屋一层一层弯等抱转来**，屋前还有一口半月形个塘。对山排上看落，就像一条龙盘等，将屋家人抱在中央。堂㧯围中间隆起个空地喊做**「化胎」**，特意毋铺石头，风水上係屋个「胎息」。梅州这种屋保存**两万几座**，密度全世界第一。"
+  },
+  rom:"Vì-liùng-vuk he Mòi-chû ke thi̍t-set mìn-kî.",
+  src:["tcg"]
+},
+{
+  id:"museum", cat:"china", icon:"🏛️",
+  k:["hakka museum","china hakka museum","中国客家博物馆","博物馆","museum meizhou"],
+  title:{en:"The China Hakka Museum, Meizhou",zh:"中国客家博物馆（梅州）",hak:"中国客家博物馆（梅州）"},
+  body:{
+    en:"The **China Hakka Museum (中国客家博物馆)** in Meizhou is the flagship institution for Hakka material culture: migration maps, dialect displays, farming and weaving tools, scholar-official records, and a hall devoted to the **overseas Hakka diaspora — including Singapore's associations and philanthropists**. Adjoining it are restored historic residences and a memorial hall complex, making it the single best starting point for a first visit to the Hakka heartland.",
+    zh:"梅州的**中国客家博物馆**是客家物质文化的旗舰馆：迁徙路线图、方言展示、农耕与纺织器具、科举与士人文献，并设有专门展厅介绍**海外客家人——包括新加坡的客属会馆与慈善家**。馆区旁还有修复的名人故居与纪念馆群，是初访客家原乡最理想的起点。",
+    hak:"梅州个**中国客家博物馆**係客家文物个旗舰馆：迁徙路线图、方言展、耕田㧯织布个家伙、读书人个文献，还有专门一间讲**海外客家人——包括新加坡个客属会馆㧯善长**。馆边还有修好个名人故居㧯纪念馆，头摆来客家原乡，对这开始最好。"
+  },
+  rom:"Chûng-koet Hak-kâ Pok-vu̍t-kón chhai Mòi-chû.",
+  src:["tcg","cd"]
+},
+
+/* ---------------------------- FOOD -------------------------------------- */
+{
+  id:"food", cat:"food", icon:"🍲",
+  k:["hakka food","what to eat","cuisine","dishes","hakka dish","famous food","客家菜","客家美食","食物","好食个","有么个好食"],
+  title:{en:"Hakka cuisine — salt, preservation, thrift",zh:"客家菜——咸、香、肥、俭",hak:"客家菜——咸、香、肥、俭"},
+  body:{
+    en:"Hakka cooking was shaped by hill farming and long journeys: **salt-heavy, preserved, generous with fat, nothing wasted**. The canon includes **salt-baked chicken (盐焗鸡)**, **yong tau foo (酿豆腐)**, **braised pork belly with preserved mustard greens (梅菜扣肉)**, **abacus seeds (算盘子)** of yam and tapioca flour, **stuffed bitter gourd and capsicum**, **Meizhou pickled noodles (腌面)**, and the herbal **lei cha (擂茶)**. **Hakka yellow rice wine (娘酒)** appears both at the table and in the confinement dish **ginger wine chicken (姜酒鸡)**.",
+    zh:"客家菜由山区耕作与长途迁徙塑成：**重盐、善腌、不忌肥、不浪费**。代表菜有**盐焗鸡**、**酿豆腐**、**梅菜扣肉**、以芋头与木薯粉搓成的**算盘子**、**酿苦瓜与酿辣椒**、**梅州腌面**，以及药香扑鼻的**擂茶**。**客家娘酒（黄酒）**既上桌，也用来煮坐月子吃的**姜酒鸡**。",
+    hak:"客家菜係分山区耕田㧯长路迁徙磨出来个：**重盐、好腌、毋惊肥、样样毋浪费**。出名个有**盐焗鸡**、**酿豆腐**、**梅菜扣肉**、用芋卵㧯薯粉搓个**算盘子**、**酿苦瓜㧯酿辣椒**、**梅州腌面**，还有一碗药香个**擂茶**。**客家娘酒**又上桌又用来煮做月个**姜酒鸡**。"
+  },
+  rom:"Hak-kâ-chhoi: hàm, hiông, phì, kiám.",
+  src:["nlb","tcg"]
+},
+{
+  id:"yongtaufu", cat:"food", icon:"🥟",
+  k:["yong tau foo","yong tau fu","酿豆腐","yongtaufoo","stuffed tofu","ytf","niang doufu"],
+  title:{en:"Yong tau foo 酿豆腐",zh:"酿豆腐",hak:"酿豆腐"},
+  body:{
+    en:"**Yong tau foo (酿豆腐, Hakka: ngiong-teu-fu)** is the most famous Hakka dish in the world, and it began as homesickness. Northern Chinese wrapped dumplings for the new year; when the Hakka settled in the south where wheat would not grow, they **stuffed the pork filling into bean curd instead**. In Meizhou it is still served as braised or clay-pot tofu squares in gravy — a proper reunion dish. In Singapore it evolved into the hawker format everyone knows: **pick your own stuffed tofu, bitter gourd, chilli, okra and fish balls**, with soup or dry with sweet sauce.",
+    zh:"**酿豆腐**是世界上最出名的客家菜，起源其实是乡愁。北方人过年包饺子；客家人南迁之后，南方不长小麦，便**把肉馅酿进豆腐里**。在梅州，它至今是煲仔或红烧的豆腐块，是正正经经的团圆菜。到了新加坡，则演化成人人熟悉的小贩形式：**自选酿豆腐、苦瓜、辣椒、羊角豆与鱼丸**，可汤可干，配甜酱。",
+    hak:"**酿豆腐**係全世界最出名个客家菜，头摆係因为想屋家。北方人过年包饺子；客家人南下以后，南方无麦，就**将肉馅酿入豆腐**。在梅州，佢还係煲仔抑係红烧个豆腐块，係正经个团圆菜。到新加坡就变做人人识个小贩样式：**自家拣酿豆腐、苦瓜、辣椒、羊角豆㧯鱼圆**，爱汤爱干都做得，配甜酱。"
+  },
+  rom:"Ngiong-teu-fu — chui chhut-miàng ke Hak-kâ-chhoi.",
+  src:["nlb"]
+},
+{
+  id:"leicha", cat:"food", icon:"🍵",
+  k:["lei cha","thunder tea","擂茶","thunder tea rice","雷茶","擂茶饭","hakka tea"],
+  title:{en:"Lei cha 擂茶 — thunder tea rice",zh:"擂茶（擂茶饭）",hak:"擂茶（擂茶饭）"},
+  body:{
+    en:"**Lei cha (擂茶)** is a savoury green broth ground by hand in a ridged clay mortar with a guava-wood pestle — **tea leaves, mint, basil, coriander, sesame, peanuts** and sometimes sweet-potato leaves. The name means “pounded tea”; the “thunder” in the Singaporean English name is the sound of grinding. Served over rice with a ring of chopped long beans, preserved radish, tofu, peanuts and dried shrimp, it is one of the healthiest things in any hawker centre and a genuine Hakka survival — **you will find it in Singapore and in Meizhou, Jiangxi and Hunan alike**.",
+    zh:"**擂茶**是用带棱的擂钵与油茶木擂棍手工研磨而成的咸香绿汤——**茶叶、薄荷、九层塔、芫荽、芝麻、花生**，有时还加番薯叶。「擂」即研磨，英文俗称 thunder tea，「雷声」正是研磨之声。淋在饭上，围一圈长豆、菜脯、豆干、花生与虾米，是小贩中心里最健康的一味，也是活生生的客家遗产——**新加坡有，梅州、江西、湖南也有**。",
+    hak:"**擂茶**係用有棱个擂钵㧯油茶棍手工擂出来个咸绿汤——**茶叶、薄荷、九层塔、芫荽、芝麻、番豆**，有时还加番薯叶。「擂」就係磨；英文喊 thunder tea，「雷声」正係擂个声。淋在饭顶，围一圈长豆、菜脯、豆干、番豆㧯虾米，係小贩中心里背最养生个一味，也係活生生个客家传统——**新加坡有，梅州、江西、湖南也有**。"
+  },
+  rom:"Lùi-chhà — Hak-kâ ke pó-vi.",
+  src:["nlb"]
+},
+{
+  id:"saltchicken", cat:"food", icon:"🍗",
+  k:["salt baked chicken","盐焗鸡","salt chicken","yan ju ji","how to make salt baked"],
+  title:{en:"Salt-baked chicken 盐焗鸡",zh:"盐焗鸡",hak:"盐焗鸡"},
+  body:{
+    en:"**Salt-baked chicken (盐焗鸡)** is Meizhou's signature dish and a lesson in preservation logic. A whole chicken is wrapped in paper and buried in a wok of coarse salt roasted until scorching; the salt conducts dry heat evenly, seasoning the bird through the paper without ever touching it. The result is firm, intensely savoury flesh and gelatinous skin, served torn by hand with a ginger-scallion-oil dip. Restaurant versions in Singapore often simplify this into a **salt-brined poached chicken** — good, but not quite the buried original.",
+    zh:"**盐焗鸡**是梅州的招牌菜，也是一堂关于「保存」的课。整鸡以纸包裹，埋入炒得滚烫的粗盐锅中，盐将干热均匀传导，隔着纸把鸡入味，却始终不直接接触鸡肉。成品肉质紧实、咸鲜浓郁、皮带胶质，手撕上桌，佐姜葱油碟。新加坡的餐馆版本多简化为**盐水浸鸡**——也好吃，但已非那只被埋进盐里的原版。",
+    hak:"**盐焗鸡**係梅州个招牌菜，也係一堂讲「保存」个课。规只鸡用纸包好，埋入炒到滚烫个粗盐镬内，盐将干热平均传过去，隔等纸将鸡焗到入味，总係毋会直接搭到鸡肉。做出来肉紧、味浓、皮有胶质，用手撕开上桌，配姜葱油碟。新加坡个餐馆多数简化做**盐水浸鸡**——也好食，总係毋係该只埋在盐内底个原版。"
+  },
+  rom:"Yàm-khiuk-kiê — Mòi-chû ke chêu-phài-chhoi.",
+  src:["tcg"]
+},
+
+/* ---------------------------- CULTURE ----------------------------------- */
+{
+  id:"hillsongs", cat:"culture", icon:"🎶",
+  k:["hill song","shan ge","folk song","客家山歌","山歌","music","singing","hakka music"],
+  title:{en:"Hakka hill songs 客家山歌",zh:"客家山歌",hak:"客家山歌"},
+  body:{
+    en:"**Hakka hill songs (客家山歌)** are improvised call-and-response verses sung across valleys while working the terraces — courtship, complaint, satire, work rhythm. The form is compact: four lines of seven syllables, rhyming on lines 1, 2 and 4, sung in a high free-tempo melisma that carries a long way over open ground. Meizhou is the heartland of the tradition and it is recognised on China's **national intangible cultural heritage** list; hill-song contests and teahouse sessions still run there today.",
+    zh:"**客家山歌**是在梯田劳作时隔山对唱的即兴之歌——情歌、诉苦、讽刺、劳动号子皆有。体制精炼：四句、每句七字，一、二、四句押韵，以高亢自由的拖腔演唱，声音可传得极远。梅州是山歌的核心传承地，客家山歌已列入**中国国家级非物质文化遗产**；当地至今仍有山歌擂台与茶馆歌会。",
+    hak:"**客家山歌**係在梯田做事个时节，隔山对唱个即兴歌——有情歌、有诉苦、有讽刺、也有做事个号子。格式好简：四句，每句七字，一、二、四句押韵，用高亢自由个拖腔唱，声音传得当远。梅州係山歌个核心，客家山歌已经列入**中国国家级非物质文化遗产**；今晡日该边还有山歌擂台㧯茶馆歌会。"
+  },
+  rom:"Hak-kâ Sân-kô — sông-yû tui-chhong.",
+  src:["cd","tcg"]
+},
+{
+  id:"opera", cat:"culture", icon:"🎭",
+  k:["han opera","广东汉剧","汉剧","opera","戏曲","theatre","puppet","木偶"],
+  title:{en:"Guangdong Han Opera 广东汉剧",zh:"广东汉剧",hak:"广东汉剧"},
+  body:{
+    en:"**Guangdong Han Opera (广东汉剧)**, centred on Meizhou, is sometimes called the “**Southern Peking Opera**” — it descends from the same Pihuang musical system, but is performed in the region's Zhongzhou-derived stage speech rather than Hakka, accompanied by the piercing **touxian (头弦)** fiddle. Meizhou also keeps a strong **Hakka puppet theatre** tradition, especially string marionettes performed at temple festivals.",
+    zh:"**广东汉剧**以梅州为中心，素有「**南国牡丹**」之誉，与京剧同出皮黄声腔系统，故亦被称作「南方的京剧」；其舞台语言用的是中州音而非客家话，主奏乐器为音色尖亮的**头弦**。梅州另有深厚的**客家木偶戏**传统，尤以庙会上的提线木偶最为著名。",
+    hak:"**广东汉剧**以梅州为中心，人喊佢做「南国牡丹」，同京剧共一个皮黄声腔系统，所以也有人讲係「南方个京剧」；台上讲个係中州音，毋係客家话，主乐器係声音尖亮个**头弦**。梅州还有当深个**客家木偶戏**，尤其係庙会做个提线木偶。"
+  },
+  rom:"Kóng-tûng Hon-khia̍k.",
+  src:["tcg"]
+},
+{
+  id:"kylin", cat:"culture", icon:"🐉",
+  k:["kylin dance","unicorn dance","qilin","舞麒麟","麒麟舞","lion dance","dragon dance","dance"],
+  title:{en:"The Hakka kylin dance 舞麒麟",zh:"客家舞麒麟",hak:"客家舞麒麟"},
+  body:{
+    en:"Where other Chinese communities dance the lion, the Hakka dance the **kylin (麒麟, qilin)** — a benevolent composite beast of scales, hooves and horn that is said to appear only in an age of virtue. The performance is closer to the ground and more martial than lion dance, traditionally paired with **Hakka kung fu troupes**, and is staged at New Year, weddings, temple festivals and association anniversaries — including in Singapore, where clan associations keep troupes alive.",
+    zh:"别的华人社群舞狮，客家人舞**麒麟**——一种鳞身、蹄足、独角的瑞兽，传说唯有盛世方现。其身段更贴地、更具武术色彩，传统上与**客家武馆**相配，逢新年、婚嫁、庙会与会馆庆典必舞——新加坡的客属会馆亦保留麒麟队。",
+    hak:"别个华人社群舞狮，客家人係舞**麒麟**——鳞身、蹄脚、独角个瑞兽，传讲盛世正会出现。舞法较贴地、较有武功味，传统上同**客家武馆**共下，过年、做亲、庙会、会馆庆典都会舞——新加坡个客属会馆也还留等麒麟队。"
+  },
+  rom:"Vú Khì-lìn."
+},
+{
+  id:"women", cat:"culture", icon:"💪",
+  k:["hakka women","women","footbinding","female","客家妇女","妇女","女人","不缠足","天足"],
+  title:{en:"Hakka women",zh:"客家妇女",hak:"客家妇人家"},
+  body:{
+    en:"Hakka women are the most-remarked-upon feature of the culture, and for a concrete reason: **they did not bind their feet**. In a hill economy where men were often away trading, soldiering or overseas, women did the field work, carried the loads and ran the household economy, and foot-binding was simply incompatible with that life. The consequences ran deep — higher female mobility, later a striking readiness to migrate and to work in public. In colonial Singapore, Hakka women worked construction sites alongside men in distinctive blue or grey headgear.",
+    zh:"客家妇女是这个族群最常被谈论的特征，原因很实在：**客家女子不缠足**。在山区经济中，男子常年经商、当兵或出洋，田里的活、肩上的担与家中的账都落在妇女身上，缠足与这种生活根本不能相容。影响极为深远——妇女行动自由，日后更表现出敢于迁徙、敢于抛头露面工作的性格。殖民地时期的新加坡，客家妇女头戴蓝色或灰色头巾，与男子一同在建筑工地做工。",
+    hak:"客家妇人家係这个族群分人讲最多个一样，理由好实在：**客家女仔毋缠脚**。山区里背，男仔常在外背做生理、当兵抑係出洋，田里个工、肩头个担、屋家个数都係妇人家在扛，缠脚同这种生活根本合毋来。影响当深——妇人家行得，后来也较敢出外、敢在公众头前做事。殖民地时代个新加坡，客家妇人家头包蓝色抑係灰色个头巾，同男仔共下在工地做工。"
+  },
+  rom:"Hak-kâ fu-ngìn-kâ m̀ chhàn-kiok.",
+  src:["nlb"]
+},
+{
+  id:"education", cat:"culture", icon:"📚",
+  k:["education","scholar","exam","school","崇文重教","读书","教育","科举","learning value"],
+  title:{en:"“Revere letters, esteem teaching” 崇文重教",zh:"崇文重教",hak:"崇文重教"},
+  body:{
+    en:"Poor hill land gave the Hakka one reliable escape route: **the examination hall**. The saying **崇文重教** — revere letters, esteem teaching — is not decoration; villages pooled clan land to fund schools, and a family would keep one son at his books while the others farmed or sailed. Meizhou has produced an outsized number of scholars, generals and university founders, and in Singapore the same instinct shows up early: **Ying Fo Fui Kun opened Yin Sin School in 1905**, decades before free public education.",
+    zh:"山田贫瘠，客家人只有一条可靠的出路：**科场**。**「崇文重教」**四字并非门面话——村中拨出族田以办学堂，一家往往供一子读书，其余耕田或出洋。梅州因而出了远超其人口比例的学者、将领与大学创办人；新加坡的客家人也一样早：**应和会馆于 1905 年创办养正学校**，比免费公共教育早了数十年。",
+    hak:"山田薄，客家人单单一条稳当个路：**考试**。**「崇文重教」**毋係门面话——村里拨出族田来办学堂，一家人常常供一只子读书，其余个耕田抑係出洋。所以梅州出个学者、将领㧯办大学个人，远远多过佢个人口比例；新加坡个客家人也一样早：**应和会馆 1905 年就办养正学校**，比免费公共教育早几十年。"
+  },
+  rom:"Sùng-vùn chung-kau.",
+  src:["nlb","ccc"]
+},
+
+/* ---------------------------- LANGUAGE ---------------------------------- */
+{
+  id:"language", cat:"language", icon:"🗣️",
+  k:["hakka language","hakka dialect","speak hakka","客家话","客语","方言","how many speakers","is hakka a language","moiyen","meixian dialect"],
+  title:{en:"The Hakka language 客家话",zh:"客家话",hak:"客家话 Hak-kâ-fa"},
+  body:{
+    en:"Hakka (客家话, **Hak-kâ-fa**) is one of the major branches of Chinese, mutually unintelligible with Mandarin or Cantonese, spoken by roughly **40 million people** worldwide. Its great linguistic interest is conservatism: Hakka **preserves the Middle Chinese entering tones**, so syllables can still end in the stops **-p, -t, -k** that Mandarin lost entirely. The **Meixian / Moiyen (梅县) variety is the de facto prestige standard**; Taiwan's Sixian and Hailu, and Singapore's Dabu and Huizhou speech, are all close relatives.",
+    zh:"客家话（**Hak-kâ-fa**）是汉语的主要分支之一，与普通话、粤语互不相通，全球使用者约**四千万人**。其语言学价值在于「存古」：客家话**完整保留中古汉语的入声**，音节仍可以 **-p、-t、-k** 收尾，而这些在普通话中已全部消失。**梅县话是事实上的标准音**；台湾的四县、海陆腔，以及新加坡的大埔、惠州口音，都是它的近亲。",
+    hak:"客家话（**Hak-kâ-fa**）係汉语几大支之一，同普通话、广府话互相听毋识，全世界大约**四千万人**讲。语言学上最贵重个係佢存古：客家话**完完整整留等中古汉语个入声**，字音还做得用 **-p、-t、-k** 收尾，这在普通话已经无忒哩。**梅县话係公认个标准音**；台湾个四县、海陆腔，㧯新加坡个大埔、惠州腔，都係佢个近亲。"
+  },
+  rom:"Hak-kâ-fa yû -p, -t, -k ke ngi̍p-sâng."
+},
+{
+  id:"pfs", cat:"language", icon:"🔤",
+  k:["pha̍k-fa-sṳ","phak fa su","romanisation","romanization","白话字","拼音","how to write hakka","spelling"],
+  title:{en:"Pha̍k-fa-sṳ 白话字 — writing Hakka in Latin letters",zh:"白话字（Pha̍k-fa-sṳ）",hak:"白话字 Pha̍k-fa-sṳ"},
+  body:{
+    en:"**Pha̍k-fa-sṳ (白话字)** is the Latin orthography for Hakka, developed by **Basel Mission** workers in 19th-century Guangdong and used for the first Hakka New Testament. It marks tone with diacritics (á à â ā a̍) and writes the entering-tone stops explicitly, which is why it is still the clearest way to show a learner how a Hakka word actually sounds. This app writes all Hakka romanisation in Pha̍k-fa-sṳ, based on the Meixian variety. Where sources differ on a spelling, we follow the most widely published form.",
+    zh:"**白话字（Pha̍k-fa-sṳ）**是客家话的拉丁拼写法，由十九世纪在广东传教的**巴色会**传教士创制，并用以翻译首部客语新约。它以附加符号标调（á à â ā a̍），并明确写出入声韵尾，因此至今仍是向学习者展示客家话真实发音最清晰的方式。本应用的客家话拼音一律采用白话字，以梅县音为准；遇到拼写分歧，取通行较广者。",
+    hak:"**白话字（Pha̍k-fa-sṳ）**係客家话个拉丁拼法，係十九世纪在广东传教个**巴色会**牧师做出来个，还用来译头一本客语新约。佢用符号标调（á à â ā a̍），入声韵尾也写得清清楚楚，所以到今晡日还係教人客家话发音最清个法子。这个应用个客家拼音全部用白话字，以梅县音为准；拼法有争议个，取通行较广个。"
+  },
+  rom:"Pha̍k-fa-sṳ he Hak-kâ ke Lâ-tên phêng-yîm."
+},
+{
+  id:"tones", cat:"language", icon:"📈",
+  k:["tone","tones","声调","几个声调","how many tones","pronunciation","发音"],
+  title:{en:"Hakka tones",zh:"客家话的声调",hak:"客家话个声调"},
+  body:{
+    en:"Meixian Hakka has **six tones**: level (陰平 / 陽平), rising (上聲), departing (去聲) and two **entering tones (陰入 / 陽入)** that occur only on syllables ending in -p, -t or -k and are noticeably clipped. That is the single hardest thing for a Mandarin speaker to hear at first — Mandarin has no short, stopped syllables at all. Practical tip: don't chase the tone numbers. **Copy whole phrases at natural speed**, and the tones ride along.",
+    zh:"梅县客家话有**六个声调**：阴平、阳平、上声、去声，以及只出现在 -p、-t、-k 收尾音节上的**阴入与阳入**，听起来短促收煞。这正是普通话使用者最难听辨的一点——普通话根本没有短促的塞尾音节。实用建议：不要死记调号，**整句照原速模仿**，声调自然就跟着来了。",
+    hak:"梅县客家话有**六个声调**：阴平、阳平、上声、去声，还有单单在 -p、-t、-k 收尾个音节正有个**阴入㧯阳入**，听起来短短收煞。这就係讲普通话个人最难听出个一点——普通话根本无这种短促个字。实用个建议：毋使死记调号，**规句照原速学**，声调自然就跈等来。"
+  },
+  rom:"Mòi-yen Hak-kâ-fa yû liuk-ke sâng-tiau."
+},
+
+/* ---------------------------- EVENTS ------------------------------------ */
+{
+  id:"events", cat:"events", icon:"🎊",
+  k:["events","festival","what's on","celebration","annual","节庆","活动","节日","有么个活动","过年"],
+  title:{en:"Hakka festivals and recurring events",zh:"客家节庆与常年活动",hak:"客家节庆㧯常年活动"},
+  body:{
+    en:"**In Singapore:** the **Nanyang Hakka Federation** and member associations run an annual cycle of cultural and food festivals, Hakka language and kylin-dance classes, and scholarship presentations; **Ying Fo Fui Kun** holds ancestral rites at Shuang Long Shan each **Qing Ming (early April)**; the **Singapore Federation of Chinese Clan Associations** stages heritage events in which the roughly 19 Hakka bodies take part.\n**In Meizhou:** hill-song contests, Han Opera seasons, the **Hakka Cultural Tourism Festival**, and lineage-hall rites clustered around **Lunar New Year, Qing Ming and the Mid-Autumn Festival**.\n**Worldwide:** the **World Hakka Conference (世界客属恳亲大会)**, a large biennial gathering of Hakka associations hosted by a different city each time.\n*Dates move — always check the association's own announcement for the current year.*",
+    zh:"**在新加坡：** **南洋客属总会**及属会每年举办文化节与美食节、客家话与麒麟舞班、颁发奖学金；**应和会馆**每年**清明（四月初）**在双龙山举行祭祖；**新加坡宗乡会馆联合总会**举办的文化活动中，约十九个客属团体皆有参与。\n**在梅州：** 山歌擂台、汉剧演出季、**客家文化旅游节**，以及集中于**农历新年、清明与中秋**的祠堂祭典。\n**全球：** **世界客属恳亲大会**，两年一届，由不同城市轮流主办，是海内外客属团体最大的聚会。\n*日期每年不同——请以主办团体当年的公告为准。*",
+    hak:"**在新加坡：** **南洋客属总会**㧯下背个会馆每年办文化节、美食节、客家话班㧯麒麟舞班，还有发奖学金；**应和会馆**逐年**清明（四月头）**在双龙山祭祖；**宗乡总会**办个文化活动，大约十九个客属团体都有份。\n**在梅州：** 山歌擂台、汉剧演出季、**客家文化旅游节**，还有集中在**过年、清明㧯中秋**个祠堂祭典。\n**全世界：** **世界客属恳亲大会**，两年一摆，逐摆由无共个城市做东，係海内外客属团体最大个聚会。\n*日期逐年无共——请照主办单位当年个公告为准。*"
+  },
+  rom:"Sṳ-kie Hak-su̍k Khén-chhîn Thai-fi.",
+  src:["nhf","whc","roots"]
+},
+
+/* ---------------------------- PRACTICAL --------------------------------- */
+{
+  id:"trip", cat:"travel", icon:"✈️",
+  k:["visit meizhou","how to get to meizhou","travel","trip","itinerary","from singapore to meizhou","去梅州","怎么去","行程","旅游"],
+  title:{en:"Getting from Singapore to the Hakka heartland",zh:"从新加坡到客家原乡",hak:"对新加坡去客家原乡"},
+  body:{
+    en:"The usual route is **Singapore → Guangzhou or Shenzhen by air**, then **high-speed rail or coach onward to Meizhou** (Meizhou also has its own small airport). Give yourself three days: **day 1** the China Hakka Museum and a weilongwu village; **day 2** Dabu county for **Taian Lou and Huae Lou**; **day 3** Yanyang or Songkou old street, tea terraces, and an evening of hill songs. Bring an appetite for salt-baked chicken and be ready for hill roads. *Visa, flight and rail arrangements change — confirm current requirements before booking.*",
+    zh:"一般路线是**新加坡飞广州或深圳**，再转**高铁或长途巴士前往梅州**（梅州本身亦有小型机场）。建议留三天：**第一天**中国客家博物馆与围龙屋村落；**第二天**赴大埔看**泰安楼与花萼楼**；**第三天**雁洋或松口老街、茶山，晚上听山歌。带好胃口吃盐焗鸡，也要有走山路的准备。*签证、航班与铁路安排时有变动，订票前请再确认。*",
+    hak:"一般係**对新加坡飞广州抑係深圳**，再转**高铁抑係长途车去梅州**（梅州本身也有细个机场）。建议留三日：**头日**中国客家博物馆㧯围龙屋村；**第二日**去大埔看**泰安楼㧯花萼楼**；**第三日**雁洋抑係松口老街、茶山，暗晡听山歌。胃口爱好，盐焗鸡等你；山路也爱有准备。*签证、飞机㧯火车个安排会变，订票前请再确认。*"
+  },
+  rom:"Chhiùng Sîn-kâ-phô hàng-to Mòi-chû.",
+  src:["tcg"]
+}
+];
+
+/* --------------------------- 4. Phrasebook ------------------------------- */
+/* Meixian Hakka. Romanisation is Pha̍k-fa-sṳ and is a practical approximation
+   for learners, not a phonetic transcription of any single speaker.          */
+const PHRASES = {
+  greetings: [
+    { en:"Hello",                      zh:"你好",       py:"nǐ hǎo",            pfs:"Ngì hó" },
+    { en:"Good morning",               zh:"早晨好",     py:"zǎochén hǎo",       pfs:"Chó-sṳ̀n hó" },
+    { en:"Have you eaten? (the usual greeting)", zh:"食饱吂？", py:"shí bǎo méi", pfs:"Sṳ̍t-páu màng?" },
+    { en:"Thank you",                  zh:"多谢",       py:"duō xiè",           pfs:"Tô-chhia" },
+    { en:"You're welcome",             zh:"唔使客气",   py:"bú yòng kèqì",      pfs:"M̀ sṳ́ hak-hi" },
+    { en:"Sorry / excuse me",          zh:"对毋住",     py:"duìbùzhù",          pfs:"Tui-m̀-chhu" },
+    { en:"Goodbye",                    zh:"再见",       py:"zàijiàn",           pfs:"Chai-kien" },
+    { en:"How are you?",               zh:"你好无？",   py:"nǐ hǎo ma",         pfs:"Ngì hó-mò?" },
+    { en:"I'm very well",              zh:"𠊎当好",     py:"wǒ hěn hǎo",        pfs:"Ngài tông-hó" },
+    { en:"Long time no see",           zh:"好久无见",   py:"hǎojiǔ bújiàn",     pfs:"Hó-kiú mò-kien" },
+    { en:"Welcome!",                   zh:"欢迎",       py:"huānyíng",          pfs:"Fôn-ngiàng" },
+    { en:"Please",                     zh:"请",         py:"qǐng",              pfs:"Chhiáng" }
+  ],
+  self: [
+    { en:"My name is …",               zh:"𠊎喊做…",   py:"wǒ jiào …",         pfs:"Ngài hêm-cho …" },
+    { en:"What is your name?",         zh:"你喊么个名？", py:"nǐ jiào shénme míngzi", pfs:"Ngì hêm mak-ke miàng?" },
+    { en:"I am Hakka",                 zh:"𠊎係客家人", py:"wǒ shì kèjiā rén",  pfs:"Ngài he Hak-kâ-ngìn" },
+    { en:"I am from Singapore",        zh:"𠊎係新加坡人", py:"wǒ shì xīnjiāpō rén", pfs:"Ngài he Sîn-kâ-phô-ngìn" },
+    { en:"Do you speak Hakka?",        zh:"你会讲客家话无？", py:"nǐ huì shuō kèjiāhuà ma", pfs:"Ngì voi kóng Hak-kâ-fa mò?" },
+    { en:"I don't understand",         zh:"𠊎听毋识",   py:"wǒ tīng bù dǒng",   pfs:"Ngài thâng m̀-sṳt" },
+    { en:"Please say that again",      zh:"请再讲一摆", py:"qǐng zài shuō yí biàn", pfs:"Chhiáng chai kóng yit-pái" },
+    { en:"A little, only a little",    zh:"少少哋",     py:"yìdiǎndiǎn",        pfs:"Séu-séu-tê" }
+  ],
+  food: [
+    { en:"Delicious!",                 zh:"好食",       py:"hǎo chī",           pfs:"Hó-sṳ̍t" },
+    { en:"I'm hungry",                 zh:"𠊎肚饥",     py:"wǒ è le",           pfs:"Ngài tú-kî" },
+    { en:"Water",                      zh:"水",         py:"shuǐ",              pfs:"Súi" },
+    { en:"Tea",                        zh:"茶",         py:"chá",               pfs:"Chhà" },
+    { en:"Rice / a meal",              zh:"饭",         py:"fàn",               pfs:"Fan" },
+    { en:"Yong tau foo",               zh:"酿豆腐",     py:"niàng dòufu",       pfs:"Ngiong-teu-fu" },
+    { en:"Salt-baked chicken",         zh:"盐焗鸡",     py:"yán jú jī",         pfs:"Yàm-khiuk-kiê" },
+    { en:"Thunder tea (lei cha)",      zh:"擂茶",       py:"léi chá",           pfs:"Lùi-chhà" },
+    { en:"Not spicy, please",          zh:"毋爱辣",     py:"bú yào là",         pfs:"M̀ oi lat" },
+    { en:"The bill, please",           zh:"结数",       py:"jiézhàng",          pfs:"Kiet-su" },
+    { en:"Let's eat!",                 zh:"食饭啰",     py:"chī fàn le",        pfs:"Sṳ̍t-fan lô" }
+  ],
+  family: [
+    { en:"Father",                     zh:"阿爸",       py:"bàba",              pfs:"Â-pâ" },
+    { en:"Mother",                     zh:"阿姆",       py:"māma",              pfs:"Â-mê" },
+    { en:"Grandfather",                zh:"阿公",       py:"yéye",              pfs:"Â-kûng" },
+    { en:"Grandmother",                zh:"阿婆",       py:"nǎinai",            pfs:"Â-phò" },
+    { en:"Elder brother",              zh:"阿哥",       py:"gēge",              pfs:"Â-kô" },
+    { en:"Elder sister",               zh:"阿姊",       py:"jiějie",            pfs:"Â-chí" },
+    { en:"Child",                      zh:"细人仔",     py:"xiǎohái",           pfs:"Se-ngìn-é" },
+    { en:"Home / house",               zh:"屋家",       py:"jiā",               pfs:"Vuk-kâ" },
+    { en:"Ancestral hall",             zh:"祠堂",       py:"cítáng",            pfs:"Chhṳ̀-thòng" }
+  ],
+  travel: [
+    { en:"Where is …?",                zh:"…在哪位？",  py:"… zài nǎlǐ",        pfs:"… chhai nai-vi?" },
+    { en:"How much is it?",            zh:"几多钱？",   py:"duōshao qián",      pfs:"Kí-tô chhièn?" },
+    { en:"Too expensive",              zh:"忒贵",       py:"tài guì",           pfs:"Thet-kui" },
+    { en:"Toilet",                     zh:"厕所",       py:"cèsuǒ",             pfs:"Chhet-só" },
+    { en:"I want to go to …",          zh:"𠊎爱去…",    py:"wǒ yào qù …",       pfs:"Ngài oi hi …" },
+    { en:"Slowly, take your time",     zh:"慢慢来",     py:"mànmàn lái",        pfs:"Man-man lòi" },
+    { en:"Help!",                      zh:"救命",       py:"jiùmìng",           pfs:"Kiu-miang" }
+  ],
+  numbers: [
+    { en:"One",   zh:"一", py:"yī",   pfs:"Yit" },
+    { en:"Two",   zh:"二", py:"èr",   pfs:"Ngi" },
+    { en:"Three", zh:"三", py:"sān",  pfs:"Sâm" },
+    { en:"Four",  zh:"四", py:"sì",   pfs:"Si" },
+    { en:"Five",  zh:"五", py:"wǔ",   pfs:"Ńg" },
+    { en:"Six",   zh:"六", py:"liù",  pfs:"Liuk" },
+    { en:"Seven", zh:"七", py:"qī",   pfs:"Chhit" },
+    { en:"Eight", zh:"八", py:"bā",   pfs:"Pat" },
+    { en:"Nine",  zh:"九", py:"jiǔ",  pfs:"Kiú" },
+    { en:"Ten",   zh:"十", py:"shí",  pfs:"Sṳ̍p" },
+    { en:"One hundred",  zh:"一百", py:"yì bǎi",  pfs:"Yit-pak" },
+    { en:"One thousand", zh:"一千", py:"yì qiān", pfs:"Yit-chhiên" }
+  ],
+  culture: [
+    { en:"Hakka",                      zh:"客家",       py:"kèjiā",             pfs:"Hak-kâ" },
+    { en:"Hakka people",               zh:"客家人",     py:"kèjiā rén",         pfs:"Hak-kâ-ngìn" },
+    { en:"The Hakka language",         zh:"客家话",     py:"kèjiā huà",         pfs:"Hak-kâ-fa" },
+    { en:"Earth building (tulou)",     zh:"土楼",       py:"tǔlóu",             pfs:"Thú-lèu" },
+    { en:"Enclosed dragon house",      zh:"围龙屋",     py:"wéilóngwū",         pfs:"Vì-liùng-vuk" },
+    { en:"Hill song",                  zh:"山歌",       py:"shāngē",            pfs:"Sân-kô" },
+    { en:"Happy New Year",             zh:"新年好",     py:"xīnnián hǎo",       pfs:"Sîn-ngièn hó" },
+    { en:"Wishing you prosperity",     zh:"恭喜发财",   py:"gōngxǐ fācái",      pfs:"Kiûng-hí fat-chhòi" },
+    { en:"Take care, go safely",       zh:"慢慢行",     py:"mànzǒu",            pfs:"Man-man hàng" }
+  ]
+};
+const PHRASE_CATS = [
+  ["greetings","Greetings","问候","问好"],
+  ["self","Introduce yourself","自我介绍","自家介绍"],
+  ["food","Food","饮食","食个"],
+  ["family","Family","家人","屋下人"],
+  ["travel","Getting around","出行","行路"],
+  ["numbers","Numbers","数字","数目"],
+  ["culture","Culture","文化","文化"]
+];
+
+/* ------------------------------ 5. NLU ----------------------------------- */
+/* Deterministic keyword-and-bigram matcher. No model, no network, no guessing:
+   if nothing scores above threshold the concierge says so and offers topics.  */
+
+const CJK_RE = /[㐀-鿿豈-﫿\u{20000}-\u{2A6DF}]/u;
+const hasCJK = (s) => CJK_RE.test(s);
+
+function normalise(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/[’']/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function latinTokens(s) {
+  return normalise(s).split(" ").filter(w => w.length > 1 && !STOP.has(w));
+}
+const STOP = new Set(("a an the is are was were be been am do does did of in on at to for from with " +
+  "about into and or but if then than that this these those it its i you he she we they me my your " +
+  "please tell show me can could would should what who where when why how many much some any more " +
+  "know like want give explain say talk speak").split(" "));
+
+/** Score a query against one KB entry. */
+function scoreEntry(entry, q) {
+  const nq = normalise(q);
+  const raw = String(q).toLowerCase();
+  const toks = latinTokens(q);
+  let score = 0;
+  for (const key of entry.k) {
+    if (hasCJK(key)) {
+      if (raw.indexOf(key) !== -1) score += 4 + key.length * 1.2;
+    } else {
+      const nk = normalise(key);
+      if (!nk) continue;
+      if (nq.indexOf(nk) !== -1) {
+        score += nk.indexOf(" ") !== -1 ? 6 + nk.length * 0.35 : 3.2;
+      } else if (nk.indexOf(" ") === -1) {
+        for (const t of toks) {
+          if (t === nk) { score += 3.2; break; }
+          if (t.length > 3 && nk.length > 3 && (t.indexOf(nk) === 0 || nk.indexOf(t) === 0)) {
+            score += 1.6; break;
+          }
+        }
+      }
+    }
+  }
+  // title words give a small boost
+  const title = normalise(entry.title.en);
+  for (const t of toks) if (t.length > 3 && title.indexOf(t) !== -1) score += 1.1;
+  return score;
+}
+
+function searchKB(q, n) {
+  const scored = KB.map(e => ({ e, s: scoreEntry(e, q) }))
+                   .filter(x => x.s > 0)
+                   .sort((a, b) => b.s - a.s);
+  return scored.slice(0, n || 3);
+}
+
+/* ---- Small talk & command intents (checked before the knowledge base) ---- */
+const INTENTS = [
+  {
+    id:"greet",
+    test:q => /\b(hi|hello|hey|good morning|good afternoon|good evening|greetings|yo)\b/.test(q) ||
+              /(你好|您好|早晨|哈啰|嗨|食饱|你好無|你好无)/.test(q) ||
+              /\bngi h[oó]\b|\bhello\b/.test(q),
+    reply: () => ({
+      en:"**Hello, and welcome!** I'm your Hakka concierge. Ask me anything about Hakka history, food, architecture, festivals or language — in English, Mandarin or Hakka. You can also tap the microphone and just talk to me.",
+      zh:"**你好，欢迎！** 我是您的客家同志。客家的历史、饮食、建筑、节庆、语言，都可以问我——英语、华语、客家话皆可。也可以按下麦克风直接同我讲。",
+      hak:"**你好，欢迎！** 𠊎係你个客家同志。客家个历史、食个、屋、节庆、语言，样样问得——英文、华语、客家话都做得。也做得㩒麦克风，直接同𠊎讲。",
+      rom:"Ngì hó, fôn-ngiàng! Ngài he ngì ke Hak-kâ thùng-chṳ.",
+      expr:"warm"
+    })
+  },
+  {
+    id:"thanks",
+    test:q => /\b(thanks|thank you|thx|appreciate)\b/.test(q) || /(谢谢|多谢|感谢|唔该)/.test(q),
+    reply: () => ({
+      en:"**You're most welcome.** In Hakka we'd say *Tô-chhia* for thank you, and *M̀ sṳ́ hak-hi* — “no need to be so polite” — in reply.",
+      zh:"**毋使客气。** 客家话里，「多谢」讲 *Tô-chhia*，回一句「唔使客气」*M̀ sṳ́ hak-hi* 就好。",
+      hak:"**唔使客气。** 客家话「多谢」讲 *Tô-chhia*，回一句「唔使客气」*M̀ sṳ́ hak-hi* 就好。",
+      rom:"M̀ sṳ́ hak-hi.",
+      expr:"happy"
+    })
+  },
+  {
+    id:"identity",
+    test:q => /(who are you|what are you|your name|about you|what can you do|help me|what can i ask)/.test(q) ||
+              /(你是谁|你係脉人|你叫什么|你个名|你能做什么|你会做么个|帮助|怎么用)/.test(q),
+    reply: () => ({
+      en:"I'm the **AI Hakka Concierge (客家数字智能同志)** — an offline guide to Hakka heritage across **Singapore and the Guangzhou–Meizhou region**. I can talk about history, migration, clan associations, tulou and weilongwu architecture, food, hill songs, festivals, and I can teach you Hakka phrases with Pha̍k-fa-sṳ romanisation. Everything I say comes from a curated, sourced knowledge base — I don't invent facts.",
+      zh:"我是**客家数字智能同志（AI Hakka Concierge）**——一个离线的客家文化导览，专精**新加坡与广州—梅州地区**。历史、迁徙、会馆、土楼与围龙屋、饮食、山歌、节庆，我都能谈；也可以教您客家话，附白话字拼音。我所说的一切都出自人工整理、注明出处的知识库——我不会杜撰。",
+      hak:"𠊎係**客家数字智能同志**——一个毋使上网个客家文化导览，专门讲**新加坡㧯广州—梅州**。历史、迁徙、会馆、土楼㧯围龙屋、食个、山歌、节庆，𠊎都讲得；也做得教你客家话，配白话字拼音。𠊎讲个逐句都出自人手整理、有出处个资料——𠊎毋会乱讲。",
+      rom:"Ngài he Hak-kâ ke chṳ-nèn thùng-chṳ.",
+      expr:"happy"
+    })
+  },
+  {
+    id:"bye",
+    test:q => /\b(bye|goodbye|see you|good night|farewell)\b/.test(q) || /(再见|拜拜|晚安|慢慢行)/.test(q),
+    reply: () => ({
+      en:"**Goodbye — take care.** Hakka has a lovely parting line: *Man-man hàng* (慢慢行), “walk slowly”. Come back any time.",
+      zh:"**再见，保重。** 客家话有一句很好的道别语：*Man-man hàng*（慢慢行）。随时再来。",
+      hak:"**再见，保重。** 客家话有一句好听个话送人：*Man-man hàng*（慢慢行）。随时再来。",
+      rom:"Man-man hàng, chai-kien.",
+      expr:"warm"
+    })
+  },
+  {
+    id:"howareyou",
+    test:q => /(how are you|how do you do|you ok)/.test(q) || /(你好吗|你好嗎|食饱吂|你好无)/.test(q),
+    reply: () => ({
+      en:"**Very well, thank you!** The most Hakka way to ask this is *Sṳ̍t-páu màng?* — literally “have you eaten yet?” Food comes before small talk.",
+      zh:"**当好，多谢！** 最客家的问法是 *Sṳ̍t-páu màng?*（食饱吂？）——字面是「吃饱了没？」在客家人这里，吃饭永远排在寒暄之前。",
+      hak:"**当好，多谢！** 最客家个问法係 *Sṳ̍t-páu màng?*（食饱吂？）——字面就係「食饱了无？」客家人这，食饭永远排在讲闲话头前。",
+      rom:"Sṳ̍t-páu màng?",
+      expr:"happy"
+    })
+  },
+  {
+    id:"joke",
+    test:q => /(tell me something|surprise me|fun fact|interesting|random)/.test(q) || /(讲个|随便|有趣|好玩)/.test(q),
+    reply: () => {
+      const pool = KB.filter(e => e.cat !== "travel");
+      const e = pool[Math.floor(Math.random() * pool.length)];
+      return { kb:e, expr:"happy" };
+    }
+  }
+];
+
+/* ------------------------ Voice / text commands -------------------------- */
+const COMMANDS = [
+  { test:q => /(switch|change|show).*(male|man|boy|him)|male character|阿雄|男(生|的|个)?(角色|同志)?|换男/.test(q) &&
+              !/female/.test(q),
+    run:() => { setCharacter("male"); return { en:"Switching to **A-Hiung 阿雄**, your male Hakka concierge.",
+      zh:"已切换到**阿雄**，男客家同志。", hak:"换到**阿雄**，男个客家同志。", rom:"Vun-to Â-hiùng." }; } },
+  { test:q => /(switch|change|show).*(female|woman|girl|her)|female character|阿妹|女(生|的|个)?(角色|同志)?|换女/.test(q),
+    run:() => { setCharacter("female"); return { en:"Switching to **A-Moi 阿妹**, your female Hakka concierge.",
+      zh:"已切换到**阿妹**，女客家同志。", hak:"换到**阿妹**，女个客家同志。", rom:"Vun-to Â-moi." }; } },
+  { test:q => /(singapore|marina|skyline).*(background|scene|view)|(background|scene).*(singapore|skyline)|新加坡(背景|场景)|换新加坡/.test(q),
+    run:() => { setScene("sg"); return { en:"Scene set to the **Singapore skyline**.", zh:"场景已切换为**新加坡天际线**。",
+      hak:"场景换做**新加坡天际线**。", rom:"Sîn-kâ-phô ke kín-set." }; } },
+  { test:q => /(tulou|earth building).*(background|scene)|(background|scene).*(tulou)|土楼(背景|场景)|换土楼/.test(q),
+    run:() => { setScene("tulou"); return { en:"Scene set to the **Hakka tulou**.", zh:"场景已切换为**客家土楼**。",
+      hak:"场景换做**客家土楼**。", rom:"Thú-lèu ke kín-set." }; } },
+  { test:q => /(museum|lab|futuristic).*(background|scene)|(background|scene).*(museum|lab)|博物馆(背景|场景)|换博物馆/.test(q),
+    run:() => { setScene("lab"); return { en:"Scene set to the **futuristic museum lab**.", zh:"场景已切换为**未来博物馆**。",
+      hak:"场景换做**未来博物馆**。", rom:"Vi-lòi pok-vu̍t-kón." }; } },
+  { test:q => /(light|day) (mode|theme)|switch to light|浅色|亮色|白色主题/.test(q),
+    run:() => { setTheme("light"); return { en:"Switched to the **light theme**.", zh:"已切换为**浅色主题**。",
+      hak:"换做**浅色主题**。", rom:"Chón-vun kong-set." }; } },
+  { test:q => /(dark|night) (mode|theme)|switch to dark|深色|暗色|黑色主题/.test(q),
+    run:() => { setTheme("dark"); return { en:"Switched to the **dark theme**.", zh:"已切换为**深色主题**。",
+      hak:"换做**深色主题**。", rom:"Chón-vun am-set." }; } },
+  { test:q => /(speak|talk|reply|answer).*(english)|in english|说英语|讲英文/.test(q),
+    run:() => { setLang("en"); return { en:"Now speaking **English**.", zh:"现在使用**英语**。", hak:"这下用**英文**讲。", rom:"Yin-vùn." }; } },
+  { test:q => /(speak|talk|reply|answer).*(mandarin|chinese)|in mandarin|说中文|讲华语|说华语|中文回答/.test(q),
+    run:() => { setLang("zh"); return { en:"Now speaking **Mandarin**.", zh:"现在使用**华语**。", hak:"这下用**华语**讲。", rom:"Fà-ngî." }; } },
+  { test:q => /(speak|talk|reply|answer).*(hakka)|in hakka|说客家话|讲客家话|用客家话/.test(q),
+    run:() => { setLang("hak"); return { en:"Now speaking **Hakka**.", zh:"现在使用**客家话**。", hak:"这下用**客家话**讲。", rom:"Hak-kâ-fa." }; } }
+];
+
+/** Main resolver: command → intent → knowledge base → graceful fallback. */
+function respond(userText) {
+  const q = String(userText || "").toLowerCase().trim();
+  if (!q) return null;
+
+  for (const c of COMMANDS) {
+    let ok = false;
+    try { ok = c.test(q); } catch (e) { ok = false; }
+    if (ok) { const r = c.run(); r.kind = "command"; r.expr = r.expr || "happy"; return r; }
+  }
+  for (const it of INTENTS) {
+    let ok = false;
+    try { ok = it.test(q); } catch (e) { ok = false; }
+    if (ok) { const r = it.reply(); r.kind = "intent"; return r; }
+  }
+  const hits = searchKB(q, 3);
+  if (hits.length && hits[0].s >= 3.0) {
+    return { kind:"kb", kb:hits[0].e, alts:hits.slice(1).map(h => h.e), expr:"thinking", score:hits[0].s };
+  }
+  return { kind:"none", expr:"surprised", alts:hits.map(h => h.e) };
+}
+
+/** Turn a resolved response into displayable text in the active language. */
+function renderResponse(r, lang) {
+  if (!r) return null;
+  const L = lang || S.lang;
+  if (r.kb) {
+    const e = r.kb;
+    const srcTxt = (e.src || []).map(s => SOURCES[s]).filter(Boolean).join(" · ");
+    return {
+      title: e.title[L] || e.title.en,
+      text:  e.body[L]  || e.body.en,
+      rom:   e.rom || "",
+      src:   srcTxt,
+      id:    e.id
+    };
+  }
+  if (r.kind === "none") {
+    const txt = {
+      en:"I don't have a sourced answer for that yet, so I won't guess. I'm strongest on **Hakka history, migration, clan associations in Singapore, tulou and weilongwu architecture, food, hill songs, festivals and the Hakka language**. Try one of the suggestions below.",
+      zh:"这一题我还没有可靠出处，所以不乱猜。我最拿手的是**客家历史、迁徙、新加坡客属会馆、土楼与围龙屋、饮食、山歌、节庆与客家话**。可以试试下面的建议。",
+      hak:"这条𠊎还无可靠个出处，所以毋乱讲。𠊎最会讲个係**客家历史、迁徙、新加坡个客属会馆、土楼㧯围龙屋、食个、山歌、节庆㧯客家话**。试下背个建议看。"
+    };
+    return { title:"", text:txt[L] || txt.en, rom:"Ngài m̀ tî, tan-he ngài m̀ voi lon-kóng.", src:"" };
+  }
+  return { title:"", text:r[L] || r.en || "", rom:r.rom || "", src:"" };
+}
+
+/* ------------------------- 6. Animated scenes ---------------------------- */
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+const Scenes = (function () {
+  let W = 0, H = 0, dpr = 1, ctx = null, cvs = null;
+  let current = "sg", previous = null, fade = 1;
+  const seedRnd = mulberry32(20260815);
+  const stars = [], clouds = [], sky = [], fire = [], dust = [], glyphs = [];
+  const GLY = ["客", "家", "梅", "州", "土", "楼", "围", "龙", "山", "歌", "南", "洋"];
+
+  for (let i = 0; i < 260; i++)
+    stars.push({ x: seedRnd(), y: seedRnd() * 0.62, r: seedRnd() * 1.3 + 0.25, p: seedRnd() * TAU, s: 0.5 + seedRnd() });
+  for (let i = 0; i < 14; i++)
+    clouds.push({ x: seedRnd(), y: 0.06 + seedRnd() * 0.3, w: 0.1 + seedRnd() * 0.22, h: 0.02 + seedRnd() * 0.035,
+                  v: 0.004 + seedRnd() * 0.012, o: 0.1 + seedRnd() * 0.3 });
+  for (let i = 0; i < 90; i++)
+    fire.push({ x: seedRnd(), y: 0.45 + seedRnd() * 0.5, p: seedRnd() * TAU, s: 0.3 + seedRnd() * 0.8,
+                a: seedRnd() * 0.03 + 0.01 });
+  for (let i = 0; i < 130; i++)
+    dust.push({ x: seedRnd(), y: seedRnd(), z: 0.2 + seedRnd() * 0.8, p: seedRnd() * TAU, v: 0.01 + seedRnd() * 0.05 });
+  for (let i = 0; i < 22; i++)
+    glyphs.push({ x: seedRnd(), y: seedRnd(), c: GLY[Math.floor(seedRnd() * GLY.length)],
+                  s: 0.4 + seedRnd() * 0.9, v: 0.006 + seedRnd() * 0.02, p: seedRnd() * TAU });
+  // Skyline building strip (stable)
+  for (let i = 0; i < 46; i++)
+    sky.push({ w: 0.018 + seedRnd() * 0.035, h: 0.08 + seedRnd() * 0.30, o: seedRnd(), lit: seedRnd() });
+
+  function attach(canvas) { cvs = canvas; ctx = canvas.getContext("2d"); }
+  function resize(w, h, d) { W = w; H = h; dpr = d; }
+  function set(name) {
+    if (name === current) return;
+    previous = current; current = name; fade = 0;
+  }
+  function isDark() { return S.theme === "dark"; }
+  function q() { return S.quality === "high" ? 1.35 : S.quality === "low" ? 0.45 : 1; }
+
+  /* ---------- shared helpers ---------- */
+  function vgrad(y0, y1, stops) {
+    const g = ctx.createLinearGradient(0, y0, 0, y1);
+    for (const s of stops) g.addColorStop(s[0], s[1]);
+    return g;
+  }
+  function roundRect(x, y, w, h, r) {
+    const rr = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  /* =================== SCENE 1 · SINGAPORE SKYLINE =================== */
+  function drawSG(t) {
+    const dark = isDark();
+    const hz = H * 0.68;                      // horizon / waterline
+    ctx.fillStyle = dark
+      ? vgrad(0, hz, [[0, "#050a1c"], [0.45, "#0d1c46"], [0.8, "#1d3a72"], [1, "#2c4f8f"]])
+      : vgrad(0, hz, [[0, "#7fb6ef"], [0.5, "#bcd9f6"], [0.85, "#f3d9c4"], [1, "#f7cfae"]]);
+    ctx.fillRect(0, 0, W, hz);
+
+    // stars
+    if (dark) {
+      for (let i = 0; i < stars.length * q(); i++) {
+        const s = stars[i];
+        const a = 0.35 + 0.5 * Math.sin(t * s.s + s.p);
+        ctx.globalAlpha = a * 0.9;
+        ctx.fillStyle = "#dfe9ff";
+        ctx.fillRect(s.x * W, s.y * hz, s.r, s.r);
+      }
+      ctx.globalAlpha = 1;
+      // moon
+      const mx = W * 0.82, my = hz * 0.2;
+      const mg = ctx.createRadialGradient(mx, my, 2, mx, my, 60);
+      mg.addColorStop(0, "rgba(255,250,230,.95)"); mg.addColorStop(.25, "rgba(255,247,215,.35)");
+      mg.addColorStop(1, "rgba(255,247,215,0)");
+      ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(mx, my, 60, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#fff8e2"; ctx.beginPath(); ctx.arc(mx, my, 13, 0, TAU); ctx.fill();
+    } else {
+      const sx = W * 0.8, sy = hz * 0.22;
+      const sg = ctx.createRadialGradient(sx, sy, 4, sx, sy, 130);
+      sg.addColorStop(0, "rgba(255,246,214,.95)"); sg.addColorStop(.3, "rgba(255,214,150,.35)");
+      sg.addColorStop(1, "rgba(255,214,150,0)");
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, 130, 0, TAU); ctx.fill();
+    }
+
+    // clouds
+    for (const c of clouds) {
+      const x = ((c.x + t * c.v) % 1.25 - 0.12) * W;
+      ctx.globalAlpha = c.o * (dark ? 0.32 : 0.72);
+      ctx.fillStyle = dark ? "#4b6bad" : "#ffffff";
+      const cw = c.w * W, ch = c.h * H, cy = c.y * hz;
+      ctx.beginPath();
+      ctx.ellipse(x, cy, cw * 0.5, ch, 0, 0, TAU);
+      ctx.ellipse(x + cw * 0.28, cy + ch * 0.18, cw * 0.34, ch * 0.75, 0, 0, TAU);
+      ctx.ellipse(x - cw * 0.3, cy + ch * 0.2, cw * 0.3, ch * 0.7, 0, 0, TAU);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // far skyline
+    const baseY = hz;
+    let x = -W * 0.02;
+    ctx.fillStyle = dark ? "#0a1330" : "#8fa8cc";
+    for (let i = 0; i < sky.length; i++) {
+      const b = sky[i];
+      const bw = b.w * W * 0.75, bh = b.h * H * 0.55;
+      ctx.fillRect(x, baseY - bh, bw, bh);
+      if (dark) {
+        ctx.fillStyle = "rgba(255,214,120,.75)";
+        const cols = Math.max(1, Math.floor(bw / 7));
+        const rows = Math.max(1, Math.floor(bh / 10));
+        for (let cx0 = 0; cx0 < cols; cx0++) for (let ry = 0; ry < rows; ry++) {
+          const seed = (i * 137 + cx0 * 31 + ry * 17) % 100;
+          const flick = Math.sin(t * 0.6 + seed) > 0.75 ? 0 : 1;
+          if ((seed / 100) < b.lit * 0.55 && flick) ctx.fillRect(x + 3 + cx0 * 7, baseY - bh + 5 + ry * 10, 2.4, 3.4);
+        }
+        ctx.fillStyle = "#0a1330";
+      }
+      x += bw + W * 0.004;
+      if (x > W) break;
+    }
+
+    // Singapore Flyer (rotating)
+    const fx = W * 0.16, fy = hz - H * 0.20, fr = H * 0.13;
+    ctx.strokeStyle = dark ? "rgba(150,200,255,.55)" : "rgba(70,100,150,.6)";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(fx, fy, fr, 0, TAU); ctx.stroke();
+    ctx.beginPath(); ctx.arc(fx, fy, fr * 0.14, 0, TAU); ctx.stroke();
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 18; i++) {
+      const a = t * 0.18 + i * TAU / 18;
+      const px = fx + Math.cos(a) * fr, py = fy + Math.sin(a) * fr;
+      ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(px, py); ctx.stroke();
+      ctx.fillStyle = dark ? `hsl(${(i * 20 + t * 40) % 360},85%,68%)` : "#e8f0ff";
+      ctx.beginPath(); ctx.arc(px, py, 3.4, 0, TAU); ctx.fill();
+    }
+    ctx.strokeStyle = dark ? "rgba(150,200,255,.4)" : "rgba(70,100,150,.5)";
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(fx - fr * 0.5, hz); ctx.lineTo(fx, fy);
+    ctx.moveTo(fx + fr * 0.5, hz); ctx.lineTo(fx, fy); ctx.stroke();
+
+    // Marina Bay Sands
+    const mbx = W * 0.42, mbw = W * 0.30, mbh = H * 0.30;
+    const towerW = mbw * 0.11;
+    ctx.fillStyle = dark ? "#101c3e" : "#c9d8ee";
+    for (let i = 0; i < 3; i++) {
+      const tx = mbx + i * (mbw * 0.4);
+      ctx.beginPath();
+      ctx.moveTo(tx, hz);
+      ctx.lineTo(tx + towerW * 0.55, hz - mbh);
+      ctx.lineTo(tx + towerW * 1.35, hz - mbh);
+      ctx.lineTo(tx + towerW * 1.1, hz);
+      ctx.closePath(); ctx.fill();
+      if (dark) {
+        ctx.fillStyle = "rgba(190,220,255,.5)";
+        for (let r = 0; r < 16; r++)
+          ctx.fillRect(tx + towerW * 0.62, hz - mbh + 10 + r * (mbh / 17), towerW * 0.66, 1.6);
+        ctx.fillStyle = "#101c3e";
+      }
+    }
+    // skypark
+    ctx.fillStyle = dark ? "#16264c" : "#b3c6e2";
+    roundRect(mbx - mbw * 0.06, hz - mbh - H * 0.028, mbw * 1.18, H * 0.028, H * 0.014); ctx.fill();
+    ctx.fillStyle = dark ? "rgba(120,200,170,.8)" : "rgba(90,150,110,.85)";
+    for (let i = 0; i < 9; i++)
+      ctx.fillRect(mbx + i * (mbw * 0.13), hz - mbh - H * 0.036, 3, H * 0.01);
+    if (dark) {
+      const lg = ctx.createLinearGradient(0, hz - mbh, 0, hz);
+      lg.addColorStop(0, "rgba(120,190,255,.22)"); lg.addColorStop(1, "rgba(120,190,255,0)");
+      ctx.fillStyle = lg; ctx.fillRect(mbx - mbw * 0.06, hz - mbh - H * 0.03, mbw * 1.18, mbh + H * 0.03);
+      // laser beams
+      for (let i = 0; i < 3; i++) {
+        const a = -1.15 + Math.sin(t * 0.35 + i * 2.1) * 0.45;
+        ctx.strokeStyle = `rgba(${i === 1 ? "120,255,190" : "130,200,255"},.28)`;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(mbx + mbw * 0.5, hz - mbh - H * 0.03);
+        ctx.lineTo(mbx + mbw * 0.5 + Math.cos(a) * W, hz - mbh - H * 0.03 + Math.sin(a) * W);
+        ctx.stroke();
+      }
+    }
+
+    // ArtScience Museum (lotus)
+    const ax = W * 0.75, ay = hz;
+    ctx.fillStyle = dark ? "#182a52" : "#e6eefb";
+    for (let i = 0; i < 8; i++) {
+      const a = -Math.PI * 0.94 + i * (Math.PI * 0.88 / 7);
+      const len = H * (0.055 + (i % 2 ? 0.028 : 0.012));
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.quadraticCurveTo(ax + Math.cos(a) * len * 0.5, ay + Math.sin(a) * len * 1.25,
+                           ax + Math.cos(a) * len, ay + Math.sin(a) * len * 0.85);
+      ctx.quadraticCurveTo(ax + Math.cos(a) * len * 0.35, ay + Math.sin(a) * len * 0.35, ax, ay);
+      ctx.fill();
+    }
+
+    // Supertrees
+    for (let i = 0; i < 3; i++) {
+      const tx = W * (0.60 + i * 0.055), th = H * (0.16 + (i % 2) * 0.04);
+      ctx.strokeStyle = dark ? "#1b3358" : "#7f9ab8";
+      ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(tx, hz); ctx.lineTo(tx, hz - th); ctx.stroke();
+      ctx.lineWidth = 2;
+      for (let j = 0; j < 7; j++) {
+        const a = -Math.PI + j * (Math.PI / 6);
+        ctx.strokeStyle = dark
+          ? `hsla(${(160 + j * 14 + t * 22) % 360},80%,62%,.55)`
+          : "rgba(110,150,110,.7)";
+        ctx.beginPath();
+        ctx.moveTo(tx, hz - th * 0.72);
+        ctx.quadraticCurveTo(tx + Math.cos(a) * th * 0.3, hz - th * 1.02,
+                             tx + Math.cos(a) * th * 0.42, hz - th * 0.92);
+        ctx.stroke();
+      }
+    }
+
+    // water
+    ctx.fillStyle = dark
+      ? vgrad(hz, H, [[0, "#0d2352"], [1, "#050c1f"]])
+      : vgrad(hz, H, [[0, "#8fc0e8"], [1, "#4c7fae"]]);
+    ctx.fillRect(0, hz, W, H - hz);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, hz, W, H - hz); ctx.clip();
+    const rows = Math.floor(26 * q());
+    for (let i = 0; i < rows; i++) {
+      const yy = hz + (i / rows) * (H - hz);
+      const amp = 6 + i * 1.3;
+      ctx.globalAlpha = 0.12 + 0.2 * (1 - i / rows);
+      ctx.strokeStyle = dark ? "#7fb6ff" : "#ffffff";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      for (let px = 0; px <= W; px += 14) {
+        const yo = Math.sin(px * 0.012 + t * (1 + i * 0.05) + i) * (amp * 0.12);
+        px === 0 ? ctx.moveTo(px, yy + yo) : ctx.lineTo(px, yy + yo);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    // vertical light reflections
+    if (dark) {
+      ctx.globalAlpha = 0.35;
+      for (let i = 0; i < 24; i++) {
+        const rx = (i * 0.043 + 0.02) * W;
+        const rg = ctx.createLinearGradient(0, hz, 0, H);
+        rg.addColorStop(0, `hsla(${(i * 37) % 360},85%,70%,.5)`);
+        rg.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = rg;
+        ctx.fillRect(rx + Math.sin(t + i) * 3, hz, 2.4, (H - hz) * (0.4 + 0.4 * Math.abs(Math.sin(i))));
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  }
+
+  /* ======================= SCENE 2 · HAKKA TULOU ===================== */
+  function drawTulou(t) {
+    const dark = isDark();
+    const hz = H * 0.74;
+    ctx.fillStyle = dark
+      ? vgrad(0, hz, [[0, "#0a1024"], [0.5, "#1b2140"], [1, "#3d3355"]])
+      : vgrad(0, hz, [[0, "#8fc7e8"], [0.55, "#cfe6ef"], [1, "#f4e2c4"]]);
+    ctx.fillRect(0, 0, W, hz);
+
+    if (dark) {
+      for (let i = 0; i < stars.length * 0.6 * q(); i++) {
+        const s = stars[i];
+        ctx.globalAlpha = (0.3 + 0.5 * Math.sin(t * s.s + s.p)) * 0.8;
+        ctx.fillStyle = "#e6ecff";
+        ctx.fillRect(s.x * W, s.y * hz * 0.8, s.r, s.r);
+      }
+      ctx.globalAlpha = 1;
+      const mx = W * 0.2, my = H * 0.14;
+      const mg = ctx.createRadialGradient(mx, my, 2, mx, my, 70);
+      mg.addColorStop(0, "rgba(255,244,220,.9)"); mg.addColorStop(1, "rgba(255,244,220,0)");
+      ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(mx, my, 70, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#fff6de"; ctx.beginPath(); ctx.arc(mx, my, 15, 0, TAU); ctx.fill();
+    } else {
+      const sx = W * 0.24, sy = H * 0.15;
+      const sg = ctx.createRadialGradient(sx, sy, 3, sx, sy, 140);
+      sg.addColorStop(0, "rgba(255,248,220,.9)"); sg.addColorStop(1, "rgba(255,230,170,0)");
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, 140, 0, TAU); ctx.fill();
+    }
+
+    // mountain ridges
+    const ridges = [
+      { y: 0.46, a: 0.075, c: dark ? "#141c38" : "#9fb6c9", sp: 0.9 },
+      { y: 0.54, a: 0.06,  c: dark ? "#1a2444" : "#8ba7bd", sp: 1.35 },
+      { y: 0.62, a: 0.05,  c: dark ? "#213052" : "#7c9ab1", sp: 1.9 }
+    ];
+    for (const r of ridges) {
+      ctx.fillStyle = r.c;
+      ctx.beginPath(); ctx.moveTo(0, H);
+      for (let px = 0; px <= W; px += 10) {
+        const n = Math.sin(px * 0.0035 * r.sp) * 0.6 + Math.sin(px * 0.0091 * r.sp + 1.7) * 0.4;
+        ctx.lineTo(px, H * r.y + n * H * r.a);
+      }
+      ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+    }
+    // mist band
+    const mg2 = ctx.createLinearGradient(0, H * 0.5, 0, H * 0.68);
+    mg2.addColorStop(0, dark ? "rgba(150,180,230,0)" : "rgba(255,255,255,0)");
+    mg2.addColorStop(0.5, dark ? "rgba(150,180,230,.14)" : "rgba(255,255,255,.5)");
+    mg2.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = mg2;
+    ctx.save(); ctx.translate(Math.sin(t * 0.06) * 24, 0);
+    ctx.fillRect(-40, H * 0.5, W + 80, H * 0.2); ctx.restore();
+
+    // ground / terraces
+    ctx.fillStyle = dark ? "#16241c" : "#7fa063";
+    ctx.fillRect(0, hz - H * 0.03, W, H);
+    for (let i = 0; i < 5; i++) {
+      const yy = hz + i * (H * 0.055);
+      ctx.fillStyle = dark ? `rgba(${30 + i * 6},${58 + i * 8},${36 + i * 5},1)`
+                           : `rgba(${128 - i * 8},${162 - i * 6},${92 - i * 5},1)`;
+      ctx.beginPath(); ctx.moveTo(0, yy);
+      for (let px = 0; px <= W; px += 16)
+        ctx.lineTo(px, yy + Math.sin(px * 0.006 + i) * 5);
+      ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+    }
+
+    // small background tulou
+    drawRoundTulou(W * 0.18, hz - H * 0.02, W * 0.13, H * 0.075, dark, t, 0.6);
+    drawRoundTulou(W * 0.83, hz - H * 0.035, W * 0.11, H * 0.062, dark, t, 0.55);
+    // main tulou
+    drawRoundTulou(W * 0.5, hz + H * 0.055, W * 0.34, H * 0.16, dark, t, 1);
+
+    // lanterns
+    for (let i = 0; i < 6; i++) {
+      const lx = W * (0.12 + i * 0.16), ly = H * 0.5 + Math.sin(t * 0.9 + i) * 4;
+      const sw = Math.sin(t * 0.8 + i * 1.3) * 0.14;
+      ctx.save(); ctx.translate(lx, H * 0.42); ctx.rotate(sw);
+      ctx.strokeStyle = dark ? "rgba(255,190,120,.35)" : "rgba(120,80,50,.45)";
+      ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, ly - H * 0.42); ctx.stroke();
+      const gy = ly - H * 0.42;
+      const lg = ctx.createRadialGradient(0, gy, 1, 0, gy, 26);
+      lg.addColorStop(0, "rgba(255,160,90,.85)"); lg.addColorStop(1, "rgba(255,120,60,0)");
+      ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(0, gy, 26, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#e0452f"; ctx.beginPath(); ctx.ellipse(0, gy, 7, 9, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#f2c14e"; ctx.fillRect(-7, gy - 1.2, 14, 2.4);
+      ctx.restore();
+    }
+
+    // bamboo foreground (swaying)
+    for (let i = 0; i < 7; i++) {
+      const bx = i < 4 ? W * (0.02 + i * 0.05) : W * (0.78 + (i - 4) * 0.07);
+      const bh = H * (0.42 + (i % 3) * 0.12);
+      const sway = Math.sin(t * 0.7 + i * 1.7) * 0.055;
+      ctx.save(); ctx.translate(bx, H);
+      ctx.strokeStyle = dark ? "#1e3a26" : "#4f7a3a";
+      ctx.lineWidth = 5 - (i % 3);
+      ctx.beginPath(); ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(sway * bh * 0.6, -bh * 0.55, sway * bh * 1.5, -bh);
+      ctx.stroke();
+      ctx.fillStyle = dark ? "rgba(40,86,52,.9)" : "rgba(86,132,62,.9)";
+      for (let l = 0; l < 6; l++) {
+        const ly2 = -bh * (0.4 + l * 0.1), lx2 = sway * bh * (0.6 + l * 0.14);
+        const dir = l % 2 ? 1 : -1;
+        ctx.beginPath();
+        ctx.ellipse(lx2 + dir * 16, ly2, 17, 3.6, dir * 0.35 + sway, 0, TAU);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // fireflies / petals
+    const n = Math.floor(fire.length * q());
+    for (let i = 0; i < n; i++) {
+      const f = fire[i];
+      const fx2 = (f.x + Math.sin(t * f.s * 0.3 + f.p) * 0.03) * W;
+      const fy2 = (f.y + Math.cos(t * f.s * 0.25 + f.p) * 0.02) * H;
+      if (dark) {
+        const a = 0.25 + 0.6 * Math.abs(Math.sin(t * f.s + f.p));
+        ctx.globalAlpha = a;
+        ctx.fillStyle = "#ffe08a";
+        ctx.beginPath(); ctx.arc(fx2, fy2, 1.9, 0, TAU); ctx.fill();
+        ctx.globalAlpha = a * 0.25;
+        ctx.beginPath(); ctx.arc(fx2, fy2, 6, 0, TAU); ctx.fill();
+      } else {
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = "#ffd9e2";
+        ctx.beginPath();
+        ctx.ellipse(((f.x + t * 0.02 * f.s) % 1) * W, ((f.y + t * 0.012) % 1) * H, 4, 2.2, t * f.s, 0, TAU);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawRoundTulou(cx, cy, rw, rh, dark, t, scale) {
+    const body = dark ? "#4a3a2c" : "#c4a882";
+    const shade = dark ? "#392c21" : "#a98d68";
+    const roof = dark ? "#241a16" : "#4e3a34";
+    // body ellipse
+    ctx.fillStyle = body;
+    ctx.beginPath(); ctx.ellipse(cx, cy - rh * 0.5, rw, rh * 1.15, 0, Math.PI, TAU); ctx.fill();
+    ctx.fillRect(cx - rw, cy - rh * 0.5, rw * 2, rh * 0.55);
+    ctx.fillStyle = shade;
+    ctx.beginPath(); ctx.ellipse(cx, cy + rh * 0.05, rw, rh * 0.42, 0, 0, Math.PI); ctx.fill();
+    // roof ring
+    ctx.fillStyle = roof;
+    ctx.beginPath(); ctx.ellipse(cx, cy - rh * 1.6, rw * 1.09, rh * 0.5, 0, Math.PI, TAU); ctx.fill();
+    ctx.fillRect(cx - rw * 1.09, cy - rh * 1.62, rw * 2.18, rh * 0.24);
+    ctx.fillStyle = dark ? "#1a1310" : "#3d2c28";
+    ctx.beginPath(); ctx.ellipse(cx, cy - rh * 1.38, rw * 1.09, rh * 0.5, 0, Math.PI, TAU); ctx.fill();
+    // eaves ticks
+    ctx.strokeStyle = dark ? "rgba(0,0,0,.5)" : "rgba(60,40,35,.45)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 26; i++) {
+      const a = Math.PI + i * Math.PI / 26;
+      const x1 = cx + Math.cos(a) * rw * 1.06, y1 = cy - rh * 1.6 + Math.sin(a) * rh * 0.48;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1, y1 + rh * 0.22); ctx.stroke();
+    }
+    // window rows
+    for (let row = 0; row < 3; row++) {
+      const ry = cy - rh * (1.15 - row * 0.42);
+      for (let i = 1; i < 22; i++) {
+        const a = Math.PI + i * Math.PI / 22;
+        const wx = cx + Math.cos(a) * rw * 0.94;
+        const depth = Math.abs(Math.sin(a));
+        if (depth < 0.12) continue;
+        const glow = dark && (row > 0) && ((i * 7 + row * 13) % 5 !== 0);
+        ctx.fillStyle = glow ? "rgba(255,186,96,.92)" : (dark ? "#241a13" : "#6d5238");
+        ctx.fillRect(wx - 2 * scale, ry, 4 * scale, 6 * scale);
+        if (glow) {
+          ctx.globalAlpha = 0.35 + 0.15 * Math.sin(t * 2 + i);
+          const g = ctx.createRadialGradient(wx, ry + 3, 1, wx, ry + 3, 14 * scale);
+          g.addColorStop(0, "rgba(255,170,80,.8)"); g.addColorStop(1, "rgba(255,170,80,0)");
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(wx, ry + 3, 14 * scale, 0, TAU); ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      }
+    }
+    // gate
+    ctx.fillStyle = dark ? "#120d0a" : "#4a3428";
+    roundRect(cx - rw * 0.11, cy - rh * 0.62, rw * 0.22, rh * 0.62, rw * 0.11); ctx.fill();
+    const gg = ctx.createRadialGradient(cx, cy - rh * 0.3, 2, cx, cy - rh * 0.3, rw * 0.4);
+    gg.addColorStop(0, dark ? "rgba(255,170,80,.5)" : "rgba(255,220,150,.35)");
+    gg.addColorStop(1, "rgba(255,170,80,0)");
+    ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(cx, cy - rh * 0.3, rw * 0.4, 0, TAU); ctx.fill();
+  }
+
+  /* ==================== SCENE 3 · MUSEUM LAB ========================= */
+  function drawLab(t) {
+    const dark = isDark();
+    const hz = H * 0.66;
+    ctx.fillStyle = dark
+      ? vgrad(0, H, [[0, "#04060f"], [0.55, "#081226"], [1, "#020409"]])
+      : vgrad(0, H, [[0, "#e8eef8"], [0.6, "#dbe6f5"], [1, "#c9d7ea"]]);
+    ctx.fillRect(0, 0, W, H);
+
+    const neon = dark ? "rgba(90,180,255," : "rgba(40,110,200,";
+    const neon2 = dark ? "rgba(120,255,215," : "rgba(30,160,140,";
+
+    // back wall glow
+    const bg = ctx.createRadialGradient(W * 0.5, hz * 0.62, 10, W * 0.5, hz * 0.62, W * 0.62);
+    bg.addColorStop(0, dark ? "rgba(40,90,180,.35)" : "rgba(160,200,255,.55)");
+    bg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+    // perspective floor grid
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, hz, W, H - hz); ctx.clip();
+    ctx.strokeStyle = neon + (dark ? ".28)" : ".33)");
+    ctx.lineWidth = 1;
+    const vpx = W * 0.5;
+    for (let i = -22; i <= 22; i++) {
+      ctx.beginPath(); ctx.moveTo(vpx + i * (W * 0.02), hz);
+      ctx.lineTo(vpx + i * (W * 0.22), H + 10); ctx.stroke();
+    }
+    const scroll = (t * 0.35) % 1;
+    for (let i = 0; i < 16; i++) {
+      const k = (i + scroll) / 16;
+      const yy = hz + Math.pow(k, 2.3) * (H - hz) * 1.15;
+      if (yy > H) continue;
+      ctx.globalAlpha = 0.16 + k * 0.6;
+      ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(W, yy); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // holographic display columns
+    for (let i = 0; i < 4; i++) {
+      const px = W * (0.1 + i * 0.27);
+      const ph = H * (0.3 + (i % 2) * 0.08);
+      const pulse = 0.5 + 0.5 * Math.sin(t * 1.1 + i * 1.4);
+      const cg = ctx.createLinearGradient(px, hz - ph, px, hz);
+      cg.addColorStop(0, neon + (0.02 + pulse * 0.05) + ")");
+      cg.addColorStop(1, neon + (0.16 + pulse * 0.12) + ")");
+      ctx.fillStyle = cg;
+      ctx.fillRect(px - W * 0.035, hz - ph, W * 0.07, ph);
+      ctx.strokeStyle = neon + "0.5)"; ctx.lineWidth = 1.2;
+      ctx.strokeRect(px - W * 0.035, hz - ph, W * 0.07, ph);
+      ctx.fillStyle = neon2 + (0.5 + pulse * 0.4) + ")";
+      for (let b = 0; b < 6; b++) {
+        const bw = (W * 0.052) * (0.3 + ((i * 7 + b * 3) % 10) / 12);
+        ctx.fillRect(px - W * 0.026, hz - ph + 12 + b * 11, bw, 3);
+      }
+      ctx.font = `${Math.max(9, W * 0.011)}px var(--font-cjk),serif`;
+      ctx.fillStyle = neon + "0.75)";
+      ctx.textAlign = "center";
+      ctx.fillText(["客家源流", "围龙屋", "南洋客属", "梅州方言"][i], px, hz - ph - 8);
+      ctx.textAlign = "left";
+    }
+
+    // central rotating wireframe tulou ring
+    const cx = W * 0.5, cy = hz - H * 0.16, R = Math.min(W, H) * 0.14;
+    ctx.save(); ctx.translate(cx, cy);
+    for (let ring = 0; ring < 3; ring++) {
+      const rr = R * (1 - ring * 0.22), squash = 0.32 + ring * 0.03;
+      ctx.strokeStyle = neon2 + (0.5 - ring * 0.1) + ")";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.ellipse(0, -ring * R * 0.22, rr, rr * squash, 0, 0, TAU); ctx.stroke();
+      for (let s = 0; s < 20; s++) {
+        const a = t * 0.25 + s * TAU / 20;
+        const x1 = Math.cos(a) * rr, y1 = Math.sin(a) * rr * squash - ring * R * 0.22;
+        ctx.globalAlpha = 0.25 + 0.55 * (0.5 + 0.5 * Math.sin(a));
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1, y1 - R * 0.2); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+    const hg = ctx.createRadialGradient(0, 0, 4, 0, 0, R * 1.6);
+    hg.addColorStop(0, neon2 + ".2)"); hg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, R * 1.6, 0, TAU); ctx.fill();
+    ctx.restore();
+
+    // projector beam
+    const bgd = ctx.createLinearGradient(cx, hz, cx, cy - R);
+    bgd.addColorStop(0, neon2 + ".16)"); bgd.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = bgd;
+    ctx.beginPath();
+    ctx.moveTo(cx - R * 0.3, hz); ctx.lineTo(cx + R * 0.3, hz);
+    ctx.lineTo(cx + R * 1.15, cy - R * 0.4); ctx.lineTo(cx - R * 1.15, cy - R * 0.4);
+    ctx.closePath(); ctx.fill();
+
+    // floating glyphs
+    ctx.textAlign = "center";
+    for (const g of glyphs) {
+      const gx = ((g.x + t * g.v * 0.15) % 1.1 - 0.05) * W;
+      const gy = ((g.y + Math.sin(t * 0.25 + g.p) * 0.02) % 1) * H;
+      ctx.globalAlpha = (dark ? 0.14 : 0.16) * (0.5 + 0.5 * Math.sin(t * 0.7 + g.p));
+      ctx.fillStyle = dark ? "#7fc4ff" : "#2c5fa8";
+      ctx.font = `${Math.max(12, W * 0.02 * g.s)}px serif`;
+      ctx.fillText(g.c, gx, gy);
+    }
+    ctx.globalAlpha = 1;
+    ctx.textAlign = "left";
+
+    // data particles
+    const n = Math.floor(dust.length * q());
+    for (let i = 0; i < n; i++) {
+      const d = dust[i];
+      const px = ((d.x + t * d.v * 0.08) % 1) * W;
+      const py = ((d.y + Math.sin(t * 0.4 + d.p) * 0.03 + 1) % 1) * H;
+      ctx.globalAlpha = 0.15 + 0.5 * d.z;
+      ctx.fillStyle = dark ? "#9ad4ff" : "#4a7fc0";
+      ctx.fillRect(px, py, 1.6 * d.z + 0.5, 1.6 * d.z + 0.5);
+    }
+    ctx.globalAlpha = 1;
+
+    // scanning sweep
+    const sy = (t * 0.22 % 1.4 - 0.2) * H;
+    const sg2 = ctx.createLinearGradient(0, sy - 40, 0, sy + 40);
+    sg2.addColorStop(0, "rgba(0,0,0,0)");
+    sg2.addColorStop(0.5, neon + (dark ? ".12)" : ".1)"));
+    sg2.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = sg2; ctx.fillRect(0, sy - 40, W, 80);
+  }
+
+  const RENDER = { sg: drawSG, tulou: drawTulou, lab: drawLab };
+
+  function draw(t) {
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    if (previous && fade < 1) {
+      (RENDER[previous] || drawSG)(t);
+      ctx.globalAlpha = fade;
+      (RENDER[current] || drawSG)(t);
+      ctx.globalAlpha = 1;
+      fade = Math.min(1, fade + 0.022);
+      if (fade >= 1) previous = null;
+    } else {
+      (RENDER[current] || drawSG)(t);
+    }
+  }
+  return { attach, resize, set, draw, get current() { return current; } };
+})();
+
+/* ------------------ 7. Character: 2.5D anime avatar ---------------------- */
+/* Drawn procedurally every frame in a virtual 420 x 660 space, then fitted to
+   the stage. Hair locks, headscarf tails and the garment hem are simulated
+   with a small fixed-timestep Verlet solver so they trail behind head and
+   body motion. Nothing is loaded from disk or network.                      */
+
+const Character = (function () {
+  const VW = 420, VH = 660;
+  const TOP = 352, BOT = 360;            // local extents above / below origin
+  let ctx = null, cvs = null, W = 0, H = 0, dpr = 1, scale = 1, offX = 0, offY = 0;
+
+  /* ------------------------------ palette ------------------------------- */
+  const PAL = {
+    skin:"#fadfc9", skinSh:"#eec2a8", skinDeep:"#dda98d",
+    line:"#4a332e",
+    hairF:"#241b21", hairFHi:"#4b3644", hairFDeep:"#171015",
+    hairM:"#1f1a1c", hairMHi:"#40353a",
+    cloth:"#f6f9ff", clothSh:"#dde5f5",
+    blue:"#2f6fe0", blueDeep:"#1b47a8", blueLite:"#8ab4f5",
+    navy:"#2b3a63", navyDeep:"#1a2444", navyHi:"#43598f",
+    lip:"#d8746f", lipDark:"#b4534f",
+    iris:"#6b4029", irisM:"#3f2b21", irisHi:"#c08a56"
+  };
+
+  /* --------------------------- Verlet physics --------------------------- */
+  function Point(x, y, pinned) { return { x, y, px: x, py: y, pinned: !!pinned }; }
+  function makeStrand(ax, ay, n, seg, dx, dy, grav, damp) {
+    const pts = [];
+    const d = Math.hypot(dx, dy) || 1;
+    for (let i = 0; i < n; i++) pts.push(Point(ax + dx / d * seg * i, ay + dy / d * seg * i, i === 0));
+    return { pts, seg, grav, damp };
+  }
+  /* Fixed-timestep integration: scaling stored velocity by a variable frame
+     factor pumps energy in and makes chains blow up, so we always advance in
+     1/60 s substeps no matter how long the real frame took. */
+  function stepChain(c, wind) {
+    const vmax = c.seg * 0.8;
+    for (const p of c.pts) {
+      if (p.pinned) continue;
+      let vx = (p.x - p.px) * c.damp, vy = (p.y - p.py) * c.damp;
+      const sp = Math.hypot(vx, vy);
+      if (sp > vmax) { vx = vx / sp * vmax; vy = vy / sp * vmax; }
+      p.px = p.x; p.py = p.y;
+      p.x += vx + wind.x;
+      p.y += vy + c.grav + wind.y;
+    }
+    for (let it = 0; it < 3; it++)
+      for (let i = 0; i < c.pts.length - 1; i++) link(c.pts[i], c.pts[i + 1], c.seg);
+  }
+  function link(a, b, len) {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const d = Math.hypot(dx, dy) || 0.0001;
+    const k = (d - len) / d * 0.5;
+    const ox = dx * k, oy = dy * k;
+    if (!a.pinned) { a.x += ox; a.y += oy; }
+    if (!b.pinned) { b.x -= ox; b.y -= oy; }
+  }
+  function makeCloth(ax, ay, w, cols, rows, seg, grav, damp) {
+    const pts = [];
+    for (let r = 0; r < rows; r++)
+      for (let c = 0; c < cols; c++)
+        pts.push(Point(ax + (c / (cols - 1) - 0.5) * w, ay + r * seg, r === 0));
+    return { pts, cols, rows, seg, w, ax, ay, grav, damp };
+  }
+  function stepCloth(cl, wind) {
+    const vmax = cl.seg * 0.8;
+    for (const p of cl.pts) {
+      if (p.pinned) continue;
+      let vx = (p.x - p.px) * cl.damp, vy = (p.y - p.py) * cl.damp;
+      const sp = Math.hypot(vx, vy);
+      if (sp > vmax) { vx = vx / sp * vmax; vy = vy / sp * vmax; }
+      p.px = p.x; p.py = p.y;
+      p.x += vx + wind.x;
+      p.y += vy + cl.grav + wind.y;
+    }
+    const idx = (r, c) => r * cl.cols + c;
+    const hs = cl.w / (cl.cols - 1);
+    for (let it = 0; it < 3; it++)
+      for (let r = 0; r < cl.rows; r++) for (let c = 0; c < cl.cols; c++) {
+        if (c < cl.cols - 1) link(cl.pts[idx(r, c)], cl.pts[idx(r, c + 1)], hs);
+        if (r < cl.rows - 1) link(cl.pts[idx(r, c)], cl.pts[idx(r + 1, c)], cl.seg);
+      }
+  }
+
+  /* ---------------------------- pose state ------------------------------ */
+  const P = {
+    yaw:0, pitch:0, roll:0, tYaw:0, tPitch:0, tRoll:0,
+    eyeX:0, eyeY:0, tEyeX:0, tEyeY:0,
+    blink:0, nextBlink:1.4, blinkPhase:-1,
+    breathe:0, bob:0,
+    browRaise:0, browAngle:0, eyeOpen:1, mouthCurve:.35, mouthOpen:0, mouthWide:0, blush:.2,
+    tBrowRaise:0, tBrowAngle:0, tEyeOpen:1, tMouthCurve:.35, tBlush:.2,
+    visOpen:0, visWide:0, nodAmt:0
+  };
+  let locks = [], tails = [], hem = null, built = "", physAcc = 0;
+  let lookTarget = { x:0, y:0 }, hasPointer = false, pointerIdle = 0;
+
+  function attach(canvas) { cvs = canvas; ctx = canvas.getContext("2d"); build(S.character, true); }
+  function resize(w, h, d) {
+    W = w; H = h; dpr = d;
+    scale = Math.min(w / (VW * 1.08), h / (TOP + BOT)) * 0.98;
+    if (!(scale > 0) || !isFinite(scale)) scale = 1;
+    offX = w / 2;
+    offY = h - BOT * scale;
+    build(S.character, true);
+  }
+
+  /* ------------------------------- rig ---------------------------------- */
+  function build(kind, force) {
+    if (built === kind && !force) return;
+    built = kind;
+    locks = []; tails = [];
+    if (kind === "female") {
+      // long locks anchored under the hair cap, hidden at the root by the mass
+      locks.push({ c: makeStrand(-72, -244, 11, 26, -0.10, 1, 1.15, 0.90), w:26 });
+      locks.push({ c: makeStrand( 72, -244, 11, 26,  0.10, 1, 1.15, 0.90), w:26 });
+      locks.push({ c: makeStrand(-96, -260, 10, 26, -0.22, 1, 1.10, 0.905), w:18 });
+      locks.push({ c: makeStrand( 96, -260, 10, 26,  0.22, 1, 1.10, 0.905), w:18 });
+      // headscarf tails
+      tails.push({ c: makeStrand(-40, -286, 8, 20, -0.30, 1, 1.00, 0.90), w:12 });
+      tails.push({ c: makeStrand( 40, -286, 8, 20,  0.30, 1, 1.00, 0.90), w:12 });
+      hem = makeCloth(0, 78, 170, 9, 5, 38, 1.30, 0.92);
+    } else {
+      locks.push({ c: makeStrand(-78, -262, 5, 18, -0.24, 1, 1.20, 0.88), w:16 });
+      locks.push({ c: makeStrand( 78, -262, 5, 18,  0.24, 1, 1.20, 0.88), w:16 });
+      locks.push({ c: makeStrand(-16, -318, 4, 16,  0.90, -0.35, 0.35, 0.87), w:11 });
+      hem = makeCloth(0, 96, 202, 9, 5, 44, 1.30, 0.92);
+    }
+  }
+
+  /* ---------------------------- external API ---------------------------- */
+  const EXPR = {
+    neutral:  { br:0,   ba:0,    eo:1,    mc:.16, bl:.14 },
+    happy:    { br:.32, ba:-.14, eo:.74,  mc:.92, bl:.36 },
+    thinking: { br:-.18,ba:.34,  eo:.88,  mc:-.08,bl:.12 },
+    surprised:{ br:.95, ba:-.22, eo:1.3,  mc:.12, bl:.24 },
+    warm:     { br:.18, ba:-.06, eo:.9,   mc:.7,  bl:.4  }
+  };
+  function setExpression(name) {
+    const e = EXPR[name] || EXPR.neutral;
+    P.tBrowRaise = e.br; P.tBrowAngle = e.ba; P.tEyeOpen = e.eo;
+    P.tMouthCurve = e.mc; P.tBlush = e.bl;
+  }
+  function look(nx, ny) {
+    hasPointer = true; pointerIdle = 0;
+    lookTarget.x = clamp(nx, -1, 1); lookTarget.y = clamp(ny, -1, 1);
+  }
+  function setViseme(open, wide) { P.visOpen = open; P.visWide = wide; }
+  function nod(a) { P.nodAmt = a; }
+  function headPos() { return { x: P.yaw * 24, y: -P.pitch * 13 + P.bob * 0.5 }; }
+
+  /* ---------------------------- per-frame ------------------------------- */
+  function update(t, dt) {
+    const sec = dt / 1000;
+    pointerIdle += sec;
+    if (pointerIdle > 4.5) hasPointer = false;
+
+    const idleYaw = Math.sin(t * 0.42) * 0.15 + Math.sin(t * 0.19 + 1.3) * 0.08;
+    const idlePit = Math.sin(t * 0.33 + 0.7) * 0.09;
+    P.breathe = Math.sin(t * 1.05) * 1.1;
+    P.bob     = Math.sin(t * 0.52) * 2.2;
+
+    if (hasPointer) {
+      P.tYaw = lookTarget.x * 0.40 + idleYaw * 0.3;
+      P.tPitch = lookTarget.y * 0.26 + idlePit * 0.3;
+      P.tEyeX = lookTarget.x * 0.9; P.tEyeY = lookTarget.y * 0.75;
+    } else {
+      P.tYaw = idleYaw; P.tPitch = idlePit;
+      P.tEyeX = Math.sin(t * 0.31 + 0.4) * 0.42;
+      P.tEyeY = Math.sin(t * 0.23 + 1.9) * 0.26;
+    }
+    P.tRoll = Math.sin(t * 0.27 + 2.1) * 0.05 + (S.speaking ? Math.sin(t * 3.1) * 0.03 : 0);
+    if (P.nodAmt > 0.001) { P.tPitch += P.nodAmt * 0.2; P.nodAmt *= 0.9; }
+
+    const k = clamp(sec * 6, 0, 1), k2 = clamp(sec * 9, 0, 1);
+    P.yaw = lerp(P.yaw, P.tYaw, k);
+    P.pitch = lerp(P.pitch, P.tPitch, k);
+    P.roll = lerp(P.roll, P.tRoll, k);
+    P.eyeX = lerp(P.eyeX, P.tEyeX, k2);
+    P.eyeY = lerp(P.eyeY, P.tEyeY, k2);
+    P.browRaise = lerp(P.browRaise, P.tBrowRaise, k);
+    P.browAngle = lerp(P.browAngle, P.tBrowAngle, k);
+    P.eyeOpen = lerp(P.eyeOpen, P.tEyeOpen, k);
+    P.mouthCurve = lerp(P.mouthCurve, P.tMouthCurve, k);
+    P.blush = lerp(P.blush, P.tBlush, k);
+    P.mouthOpen = lerp(P.mouthOpen, P.visOpen, clamp(sec * 26, 0, 1));
+    P.mouthWide = lerp(P.mouthWide, P.visWide, clamp(sec * 18, 0, 1));
+
+    P.nextBlink -= sec;
+    if (P.nextBlink <= 0 && P.blinkPhase < 0) { P.blinkPhase = 0; P.nextBlink = rand(2.6, 6.4); }
+    if (P.blinkPhase >= 0) {
+      P.blinkPhase += sec / 0.13;
+      P.blink = P.blinkPhase < 1 ? Math.sin(P.blinkPhase * Math.PI) : 0;
+      if (P.blinkPhase >= 1) { P.blinkPhase = -1; P.blink = 0; }
+    }
+
+    if (S.physics && !S.reducedMotion) simulate(t, dt);
+  }
+
+  function simulate(t, dt) {
+    const hp = headPos();
+    // Deliberately gentle: the hang angle is atan(wind / gravity), so a large
+    // wind would visibly blow the whole costume sideways.
+    const wind = {
+      x: Math.sin(t * 0.62) * 0.075 + Math.sin(t * 1.7 + 1.1) * 0.04 - P.yaw * 0.85,
+      y: Math.sin(t * 0.9 + 2) * 0.02
+    };
+    const anchor = (s, ox, oy) => {
+      const a = s.c.pts[0];
+      if (!s.base) s.base = { x: a.x, y: a.y };
+      a.x = s.base.x + ox; a.y = s.base.y + oy;
+    };
+    for (const s of locks) anchor(s, hp.x + P.yaw * 8, hp.y);
+    for (const s of tails) anchor(s, hp.x + P.yaw * 10, hp.y);
+    for (let c = 0; c < hem.cols; c++) {
+      const p = hem.pts[c];
+      p.x = hem.ax + (c / (hem.cols - 1) - 0.5) * hem.w + P.yaw * 4;
+      p.y = hem.ay + P.bob * 0.35;
+    }
+
+    physAcc = Math.min(physAcc + dt, 120);
+    let n = 0;
+    while (physAcc >= 16.667 && n < 3) {
+      for (const s of locks) stepChain(s.c, wind);
+      for (const s of tails) stepChain(s.c, { x: wind.x * 1.1, y: wind.y });
+      stepCloth(hem, { x: wind.x * 0.55, y: 0 });
+      physAcc -= 16.667; n++;
+    }
+    if (n === 3) physAcc = 0;
+    guard();
+  }
+  /* Safety net: rebuild if anything ever goes non-finite or runs away. */
+  function guard() {
+    let bad = false;
+    const chk = pts => { for (const p of pts) {
+      if (!isFinite(p.x) || !isFinite(p.y) || Math.abs(p.x) > 1600 || Math.abs(p.y) > 1600) { bad = true; return; }
+    } };
+    for (const s of locks) { chk(s.c.pts); if (bad) break; }
+    if (!bad) for (const s of tails) { chk(s.c.pts); if (bad) break; }
+    if (!bad && hem) chk(hem.pts);
+    if (bad) { physAcc = 0; build(built, true); }
+  }
+
+  /* ------------------------- drawing primitives ------------------------- */
+  function rrect(x, y, w, h, r) {
+    const rr = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+  /** Smooth tapered ribbon along a polyline, pointed at the tip. */
+  function ribbon(pts, w) {
+    const n = pts.length, L = [], R = [];
+    for (let i = 0; i < n; i++) {
+      const p = pts[i];
+      const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.hypot(dx, dy) || 1;
+      const nx = -dy / d, ny = dx / d;
+      const u = i / (n - 1);
+      const ww = w * Math.pow(1 - u, 0.7) * (0.55 + 0.45 * Math.sin(Math.min(1, u * 3.2) * Math.PI / 2));
+      L.push([p.x + nx * ww, p.y + ny * ww]);
+      R.push([p.x - nx * ww, p.y - ny * ww]);
+    }
+    ctx.beginPath();
+    ctx.moveTo(L[0][0], L[0][1]);
+    for (let i = 1; i < n - 1; i++)
+      ctx.quadraticCurveTo(L[i][0], L[i][1], (L[i][0] + L[i + 1][0]) / 2, (L[i][1] + L[i + 1][1]) / 2);
+    ctx.lineTo(pts[n - 1].x, pts[n - 1].y);
+    for (let i = n - 2; i > 0; i--)
+      ctx.quadraticCurveTo(R[i][0], R[i][1], (R[i][0] + R[i - 1][0]) / 2, (R[i][1] + R[i - 1][1]) / 2);
+    ctx.lineTo(R[0][0], R[0][1]);
+    ctx.closePath();
+  }
+  /** Deterministic blue rosettes; call inside a clip. */
+  function floral(x0, y0, x1, y1, seed, density) {
+    const r = mulberry32(seed);
+    const n = Math.floor(((x1 - x0) * (y1 - y0)) / (2400 / (density || 1)));
+    for (let i = 0; i < n; i++) {
+      const x = x0 + r() * (x1 - x0), y = y0 + r() * (y1 - y0);
+      const s = 3.2 + r() * 3.8, rot = r() * TAU;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+      ctx.fillStyle = r() > 0.5 ? PAL.blue : PAL.blueDeep;
+      for (let p = 0; p < 5; p++) {
+        const a = p * TAU / 5;
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(a) * s * 0.6, Math.sin(a) * s * 0.6, s * 0.48, s * 0.32, a, 0, TAU);
+        ctx.fill();
+      }
+      ctx.fillStyle = PAL.blueLite;
+      ctx.beginPath(); ctx.arc(0, 0, s * 0.28, 0, TAU); ctx.fill();
+      if (r() > 0.62) {
+        ctx.fillStyle = "rgba(58,116,88,.7)";
+        ctx.beginPath(); ctx.ellipse(s * 1.25, s * 0.85, s * 0.5, s * 0.2, 0.7, 0, TAU); ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  /* ------------------------------ geometry ------------------------------ */
+  const HEAD_Y = -212;
+  const SHOULDER = -66;
+  const HIP = 356;
+
+  function torsoPath(half, br) {
+    ctx.beginPath();
+    ctx.moveTo(-half - br * 0.4, HIP);
+    ctx.quadraticCurveTo(-half - 2, SHOULDER + 62, -half + 32, SHOULDER + 10);
+    ctx.quadraticCurveTo(-56, SHOULDER - 18, 0, SHOULDER - 22);
+    ctx.quadraticCurveTo(56, SHOULDER - 18, half - 32, SHOULDER + 10);
+    ctx.quadraticCurveTo(half + 2, SHOULDER + 62, half + br * 0.4, HIP);
+    ctx.closePath();
+  }
+  function facePath() {
+    ctx.beginPath();
+    ctx.moveTo(-74, -14);
+    ctx.bezierCurveTo(-74, -80, -42, -102, 0, -102);
+    ctx.bezierCurveTo(42, -102, 74, -80, 74, -14);
+    ctx.bezierCurveTo(74, 34, 48, 74, 0, 96);
+    ctx.bezierCurveTo(-48, 74, -74, 34, -74, -14);
+    ctx.closePath();
+  }
+  function eyePath(x, y, w, h) {
+    ctx.beginPath();
+    ctx.moveTo(x - w, y + h * 0.10);
+    ctx.bezierCurveTo(x - w * 0.72, y - h * 1.22, x + w * 0.72, y - h * 1.22, x + w, y + h * 0.06);
+    ctx.bezierCurveTo(x + w * 0.62, y + h * 1.02, x - w * 0.62, y + h * 1.02, x - w, y + h * 0.10);
+    ctx.closePath();
+  }
+
+  /* ------------------------------- body --------------------------------- */
+  function drawBody(kind) {
+    const br = P.breathe;
+    const half = kind === "female" ? 100 : 112;
+    const HAIR = kind === "female" ? PAL.hairF : PAL.hairM;
+
+    /* 1 — physics locks and scarf tails sit furthest back */
+    for (const s of locks) {
+      ctx.fillStyle = HAIR; ribbon(s.c.pts, s.w); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.06)"; ribbon(s.c.pts, s.w * 0.42); ctx.fill();
+    }
+    if (kind === "female") for (const s of tails) {
+      ctx.save(); ribbon(s.c.pts, s.w);
+      ctx.fillStyle = PAL.cloth; ctx.fill(); ctx.clip();
+      floral(-240, -340, 240, 160, 4242, 2.4);
+      ctx.restore();
+      ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 2; ribbon(s.c.pts, s.w); ctx.stroke();
+    }
+
+    /* 2 — hair mass behind the head and shoulders */
+    ctx.fillStyle = HAIR;
+    ctx.beginPath();
+    ctx.ellipse(P.yaw * 18, HEAD_Y - 22 - P.pitch * 8,
+                kind === "female" ? 108 : 95, kind === "female" ? 125 : 108, P.roll, 0, TAU);
+    ctx.fill();
+    if (kind === "female") {
+      ctx.beginPath();
+      ctx.moveTo(-92 + P.yaw * 16, HEAD_Y - 6);
+      ctx.quadraticCurveTo(-110 + P.yaw * 12, HEAD_Y + 130, -76, HEAD_Y + 240);
+      ctx.lineTo(76, HEAD_Y + 240);
+      ctx.quadraticCurveTo(110 + P.yaw * 12, HEAD_Y + 130, 92 + P.yaw * 16, HEAD_Y - 6);
+      ctx.closePath(); ctx.fill();
+    }
+
+    /* 3 — neck */
+    ctx.fillStyle = PAL.skinSh;
+    rrect(-22 + P.yaw * 13, HEAD_Y + 84, 44, 54, 14); ctx.fill();
+    ctx.fillStyle = "rgba(150,90,70,.20)";
+    ctx.beginPath(); ctx.ellipse(P.yaw * 13, HEAD_Y + 94, 30, 12, 0, 0, Math.PI); ctx.fill();
+
+    /* 4 — costume */
+    if (kind === "female") femaleOutfit(half, br);
+    else                   maleOutfit(half, br);
+  }
+
+  function sleeves(half, dark, cuff) {
+    for (const dir of [-1, 1]) {
+      ctx.save();
+      ctx.translate(dir * (half - 14), SHOULDER + 34);
+      ctx.rotate(dir * 0.05);
+      ctx.fillStyle = dark;
+      rrect(-21, 0, 42, HIP - SHOULDER - 40, 20); ctx.fill();
+      ctx.strokeStyle = cuff; ctx.lineWidth = 4;
+      rrect(-21, 0, 42, HIP - SHOULDER - 40, 20); ctx.stroke();
+      ctx.fillStyle = cuff;
+      rrect(-21, HIP - SHOULDER - 88, 42, 24, 9); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function femaleOutfit(half, br) {
+    /* sleeves behind the torso */
+    sleeves(half, "#eef3fd", PAL.blueDeep);
+
+    /* blouse */
+    ctx.save();
+    torsoPath(half, br); ctx.clip();
+    ctx.fillStyle = PAL.cloth;
+    ctx.fillRect(-half - 30, SHOULDER - 40, (half + 30) * 2, HIP - SHOULDER + 60);
+    const g = ctx.createLinearGradient(-half, 0, half, 0);
+    g.addColorStop(0, "rgba(110,145,200,.34)"); g.addColorStop(.34, "rgba(255,255,255,0)");
+    g.addColorStop(.68, "rgba(255,255,255,0)"); g.addColorStop(1, "rgba(110,145,200,.34)");
+    ctx.fillStyle = g; ctx.fillRect(-half - 30, SHOULDER - 40, (half + 30) * 2, HIP - SHOULDER + 60);
+    floral(-half - 30, SHOULDER - 34, half + 30, 150, 12345, 1.2);
+
+    /* blue trousers below the waist */
+    ctx.fillStyle = PAL.blueDeep;
+    ctx.fillRect(-half - 30, 118, (half + 30) * 2, HIP - 100);
+    ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(0, 250); ctx.lineTo(0, HIP); ctx.stroke();
+
+    /* diagonal closure 斜襟 + frog buttons 盘扣 */
+    ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(-4 + P.yaw * 8, SHOULDER - 8);
+    ctx.quadraticCurveTo(38 + P.yaw * 6, SHOULDER + 22, 54 + P.yaw * 4, SHOULDER + 86);
+    ctx.lineTo(54 + P.yaw * 4, HIP); ctx.stroke();
+    ctx.fillStyle = PAL.blueDeep;
+    for (let i = 0; i < 3; i++) {
+      const yy = SHOULDER + 40 + i * 30, xx = 48 + P.yaw * 5;
+      ctx.beginPath(); ctx.arc(xx, yy, 3.6, 0, TAU); ctx.fill();
+      ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.moveTo(xx - 11, yy - 3.5); ctx.quadraticCurveTo(xx - 3, yy, xx - 11, yy + 3.5); ctx.stroke();
+    }
+    ctx.restore();
+    ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 5;
+    torsoPath(half, br); ctx.stroke();
+
+    /* apron with simulated hem */
+    apron(PAL.blue, PAL.cloth, 5);
+
+    /* waistband */
+    ctx.save(); torsoPath(half, br); ctx.clip();
+    ctx.fillStyle = PAL.cloth;
+    ctx.fillRect(-half - 20, 64, (half + 20) * 2, 15);
+    ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(-half - 20, 64.5); ctx.lineTo(half + 20, 64.5);
+    ctx.moveTo(-half - 20, 78.5); ctx.lineTo(half + 20, 78.5); ctx.stroke();
+    ctx.restore();
+
+    /* mandarin collar */
+    ctx.fillStyle = PAL.blueDeep;
+    ctx.beginPath();
+    ctx.moveTo(-32 + P.yaw * 13, SHOULDER - 10);
+    ctx.quadraticCurveTo(P.yaw * 13, SHOULDER - 34, 32 + P.yaw * 13, SHOULDER - 10);
+    ctx.quadraticCurveTo(P.yaw * 13, SHOULDER + 8, -32 + P.yaw * 13, SHOULDER - 10);
+    ctx.closePath(); ctx.fill();
+  }
+
+  function maleOutfit(half, br) {
+    ctx.fillStyle = PAL.navyDeep;
+    rrect(-100, 150, 200, 212, 16); ctx.fill();
+
+    sleeves(half, PAL.navy, PAL.navyHi);
+
+    ctx.save();
+    torsoPath(half, br); ctx.clip();
+    ctx.fillStyle = PAL.navy;
+    ctx.fillRect(-half - 30, SHOULDER - 40, (half + 30) * 2, HIP - SHOULDER + 60);
+    const g = ctx.createLinearGradient(-half, 0, half, 0);
+    g.addColorStop(0, "rgba(0,0,0,.34)"); g.addColorStop(.32, "rgba(130,165,225,.16)");
+    g.addColorStop(.72, "rgba(0,0,0,.06)"); g.addColorStop(1, "rgba(0,0,0,.34)");
+    ctx.fillStyle = g; ctx.fillRect(-half - 30, SHOULDER - 40, (half + 30) * 2, HIP - SHOULDER + 60);
+
+    /* crane embroidery */
+    ctx.save();
+    ctx.translate(-48 + P.yaw * 8, SHOULDER + 66);
+    ctx.fillStyle = "#eef4ff";
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.quadraticCurveTo(-6, -18, 6, -26);
+    ctx.quadraticCurveTo(16, -32, 12, -20); ctx.quadraticCurveTo(9, -12, 14, -4);
+    ctx.quadraticCurveTo(24, 8, 6, 14); ctx.quadraticCurveTo(-6, 16, 0, 0);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = PAL.blueLite;
+    ctx.beginPath(); ctx.moveTo(4, -2); ctx.quadraticCurveTo(26, -15, 32, 2);
+    ctx.quadraticCurveTo(18, 5, 4, -2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#d94b3a";
+    ctx.beginPath(); ctx.arc(9, -27, 2.4, 0, TAU); ctx.fill();
+    ctx.restore();
+
+    /* centre placket */
+    ctx.strokeStyle = PAL.navyDeep; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(P.yaw * 10, SHOULDER - 8); ctx.lineTo(P.yaw * 6, HIP); ctx.stroke();
+    ctx.fillStyle = PAL.navyHi;
+    for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(P.yaw * 8, SHOULDER + 34 + i * 38, 4.6, 0, TAU); ctx.fill(); }
+    ctx.restore();
+
+    ctx.strokeStyle = PAL.navyDeep; ctx.lineWidth = 5;
+    torsoPath(half, br); ctx.stroke();
+
+    apron(PAL.navy, PAL.navyDeep, 4);
+
+    /* mandarin collar */
+    ctx.fillStyle = PAL.navyHi;
+    ctx.beginPath();
+    ctx.moveTo(-30 + P.yaw * 13, SHOULDER - 12);
+    ctx.quadraticCurveTo(P.yaw * 13, SHOULDER - 36, 30 + P.yaw * 13, SHOULDER - 12);
+    ctx.quadraticCurveTo(P.yaw * 13, SHOULDER + 6, -30 + P.yaw * 13, SHOULDER - 12);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = PAL.navyDeep; ctx.lineWidth = 2; ctx.stroke();
+  }
+
+  /** Skirt / robe panel whose lower edge is driven by the cloth simulation. */
+  function apron(fill, edge, lw) {
+    const raw = hem.pts.slice((hem.rows - 1) * hem.cols);
+    const flare = 1.16;                       // an apron widens toward the hem
+    const bot = raw.map(p => ({ x: p.x * flare, y: p.y }));
+    ctx.beginPath();
+    ctx.moveTo(hem.pts[0].x, hem.pts[0].y);
+    ctx.lineTo(hem.pts[hem.cols - 1].x, hem.pts[hem.cols - 1].y);
+    ctx.lineTo(bot[bot.length - 1].x, bot[bot.length - 1].y);
+    for (let i = bot.length - 2; i >= 0; i--) {
+      const p = bot[i], q = bot[i + 1];
+      ctx.quadraticCurveTo((p.x + q.x) / 2, (p.y + q.y) / 2, p.x, p.y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.save(); ctx.clip();
+    const g = ctx.createLinearGradient(-hem.w / 2, 0, hem.w / 2, 0);
+    g.addColorStop(0, "rgba(0,0,0,.26)"); g.addColorStop(.42, "rgba(255,255,255,.12)");
+    g.addColorStop(1, "rgba(0,0,0,.26)");
+    ctx.fillStyle = g; ctx.fillRect(-200, hem.ay - 10, 400, 420);
+    // fold lines follow the simulated bottom edge
+    ctx.strokeStyle = "rgba(0,0,0,.16)"; ctx.lineWidth = 2;
+    for (let i = 2; i < bot.length - 1; i += 2) {
+      ctx.beginPath();
+      ctx.moveTo(hem.pts[i].x, hem.pts[i].y);
+      ctx.lineTo(bot[i].x, bot[i].y);
+      ctx.stroke();
+    }
+    ctx.restore();
+    ctx.strokeStyle = edge; ctx.lineWidth = lw; ctx.lineJoin = "round"; ctx.stroke();
+  }
+
+  /* ------------------------------- head --------------------------------- */
+  function drawHead(kind) {
+    const hp = headPos();
+    ctx.save();
+    ctx.translate(hp.x, HEAD_Y + hp.y);
+    ctx.rotate(P.roll);
+    ctx.scale((1 - Math.abs(P.yaw) * 0.09) * 1.08, 1.08);
+    const fx = P.yaw * 28;
+
+    /* ears */
+    ctx.fillStyle = PAL.skinSh;
+    ctx.beginPath(); ctx.ellipse(-74 + fx * .3, 16, 11, 19, -0.18, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse( 74 + fx * .3, 16, 11, 19,  0.18, 0, TAU); ctx.fill();
+
+    /* face */
+    ctx.fillStyle = PAL.skin; facePath(); ctx.fill();
+    const fg = ctx.createLinearGradient(0, -70, 0, 96);
+    fg.addColorStop(0, "rgba(255,255,255,.18)");
+    fg.addColorStop(.55, "rgba(255,255,255,0)");
+    fg.addColorStop(1, "rgba(212,142,116,.30)");
+    ctx.fillStyle = fg; facePath(); ctx.fill();
+
+    /* blush */
+    if (P.blush > 0.02) {
+      ctx.globalAlpha = P.blush;
+      ctx.fillStyle = "rgba(240,138,128,.55)";
+      ctx.beginPath(); ctx.ellipse(-44 + fx, 40, 19, 10, -0.12, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.ellipse( 44 + fx, 40, 19, 10,  0.12, 0, TAU); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    drawEye(-31 + fx, 18, -1, kind);
+    drawEye( 31 + fx, 18,  1, kind);
+
+    /* nose */
+    ctx.strokeStyle = "rgba(196,132,108,.8)"; ctx.lineWidth = 2.2; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(2 + fx * 1.05, 42); ctx.quadraticCurveTo(7 + fx * 1.05, 48, 0 + fx * 1.05, 50);
+    ctx.stroke();
+
+    drawMouth(fx * 1.05, 66);
+
+    /* hair, then brows painted over the fringe (standard anime convention) */
+    if (kind === "female") femaleHair(fx); else maleHair(fx);
+    drawBrow(-31 + fx, -14, -1, kind);
+    drawBrow( 31 + fx, -14,  1, kind);
+
+    ctx.restore();
+    if (kind === "female") drawScarf(hp);
+  }
+
+  function drawEye(x, y, side, kind) {
+    const open = clamp(P.eyeOpen * (1 - P.blink), 0.035, 1.35);
+    const w = kind === "female" ? 24 : 22.5, h = (kind === "female" ? 23 : 21) * open;
+    ctx.save();
+    eyePath(x, y, w, h); ctx.clip();
+
+    ctx.fillStyle = "#fdfbff"; ctx.fillRect(x - w - 2, y - h * 2, w * 2 + 4, h * 4);
+    ctx.fillStyle = "rgba(150,162,205,.30)";
+    ctx.fillRect(x - w - 2, y - h * 2, w * 2 + 4, h * 2.1);
+
+    const ix = x + P.eyeX * 6, iy = y + P.eyeY * 4.5 + 1, ir = kind === "female" ? 14.6 : 13.4;
+    const ig = ctx.createRadialGradient(ix, iy - 4, 1.5, ix, iy, ir);
+    ig.addColorStop(0, PAL.irisHi);
+    ig.addColorStop(.5, kind === "female" ? PAL.iris : PAL.irisM);
+    ig.addColorStop(1, "#1c110d");
+    ctx.fillStyle = ig;
+    ctx.beginPath(); ctx.arc(ix, iy, ir, 0, TAU); ctx.fill();
+    ctx.strokeStyle = "rgba(26,14,10,.6)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(ix, iy, ir, 0, TAU); ctx.stroke();
+    ctx.fillStyle = "#140d0b";
+    ctx.beginPath(); ctx.arc(ix, iy, 6.4, 0, TAU); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.96)";
+    ctx.beginPath(); ctx.ellipse(ix - 5.2, iy - 6.4, 4.6, 5.4, -0.4, 0, TAU); ctx.fill();
+    ctx.globalAlpha = .65;
+    ctx.beginPath(); ctx.arc(ix + 5, iy + 4.6, 2.3, 0, TAU); ctx.fill();
+    ctx.globalAlpha = .3;
+    ctx.beginPath(); ctx.ellipse(ix, iy + 8, 7.5, 3, 0, 0, TAU); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    /* soft lower rim only */
+    ctx.strokeStyle = "rgba(150,108,96,.35)"; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(x - w * 0.9, y + h * 0.5);
+    ctx.bezierCurveTo(x - w * 0.55, y + h * 1.02, x + w * 0.55, y + h * 1.02, x + w * 0.9, y + h * 0.46);
+    ctx.stroke();
+
+    /* upper lash */
+    ctx.strokeStyle = PAL.line;
+    ctx.lineWidth = kind === "female" ? 5 : 4;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x - w, y + h * 0.10);
+    ctx.bezierCurveTo(x - w * 0.72, y - h * 1.30, x + w * 0.72, y - h * 1.30, x + w, y + h * 0.06);
+    ctx.stroke();
+    if (kind === "female") {
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.moveTo(x + side * w * 0.88, y - h * 0.28);
+      ctx.quadraticCurveTo(x + side * (w + 3), y - h * 0.62, x + side * (w + 5.5), y - h * 0.92);
+      ctx.stroke();
+    }
+  }
+
+  function drawBrow(x, y, side, kind) {
+    const raise = P.browRaise * 8;
+    ctx.save();
+    ctx.translate(x, y - raise);
+    ctx.rotate(P.browAngle * side * 0.45);
+    ctx.strokeStyle = kind === "female" ? "#54372f" : "#3d2a24";
+    ctx.lineWidth = 3.6; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-side * 15, 3.5);
+    ctx.quadraticCurveTo(0, -4.5 - P.browRaise * 3, side * 14, 0);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawMouth(x, y) {
+    const open = P.mouthOpen, wide = 1 + P.mouthWide * 0.5, curve = P.mouthCurve;
+    const w = 16 * wide, h = 2.2 + open * 14;
+    ctx.save(); ctx.translate(x, y);
+    if (open > 0.06) {
+      ctx.fillStyle = "#7c2f34";
+      ctx.beginPath();
+      ctx.moveTo(-w, 0);
+      ctx.quadraticCurveTo(0, -curve * 4 - 2, w, 0);
+      ctx.quadraticCurveTo(0, h * 2 + curve * 2, -w, 0);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#c4585e";
+      ctx.beginPath(); ctx.ellipse(0, h * 0.95, w * 0.58, h * 0.5, 0, 0, Math.PI); ctx.fill();
+      if (open > 0.42) {
+        ctx.fillStyle = "#fff8f5";
+        ctx.beginPath();
+        ctx.moveTo(-w * 0.8, -1);
+        ctx.quadraticCurveTo(0, -curve * 3 - 1, w * 0.8, -1);
+        ctx.lineTo(w * 0.68, 3); ctx.quadraticCurveTo(0, 4.4, -w * 0.68, 3);
+        ctx.closePath(); ctx.fill();
+      }
+    }
+    ctx.strokeStyle = PAL.lipDark; ctx.lineWidth = 3; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-w, 0); ctx.quadraticCurveTo(0, curve * 8 + open * 4, w, 0);
+    ctx.stroke();
+    if (curve > 0.45) {
+      ctx.lineWidth = 1.9;
+      ctx.beginPath(); ctx.moveTo(-w - 2.5, -2); ctx.lineTo(-w + 1.5, 1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo( w + 2.5, -2); ctx.lineTo( w - 1.5, 1); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function femaleHair(fx) {
+    ctx.fillStyle = PAL.hairF;
+    /* cap + soft swept fringe, ending just above the eyes */
+    ctx.beginPath();
+    ctx.moveTo(-84, 12);
+    ctx.bezierCurveTo(-92, -76, -50, -118, 0, -118);
+    ctx.bezierCurveTo(50, -118, 92, -76, 84, 12);
+    ctx.quadraticCurveTo(84, -4, 62, -20);             // right temple
+    ctx.bezierCurveTo(28, -2, -24, -2, -60, -20);      // fringe dips over the brow
+    ctx.quadraticCurveTo(-84, -4, -84, 12);
+    ctx.closePath(); ctx.fill();
+    /* face-framing side locks */
+    ctx.beginPath();
+    ctx.moveTo(-82, -34); ctx.quadraticCurveTo(-96, 26, -78, 84);
+    ctx.quadraticCurveTo(-66, 30, -64, -18); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(82, -34); ctx.quadraticCurveTo(96, 26, 78, 84);
+    ctx.quadraticCurveTo(66, 30, 64, -18); ctx.closePath(); ctx.fill();
+    /* gloss */
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(-84, 12);
+    ctx.bezierCurveTo(-92, -76, -50, -118, 0, -118);
+    ctx.bezierCurveTo(50, -118, 92, -76, 84, 12);
+    ctx.lineTo(84, -122); ctx.lineTo(-84, -122); ctx.closePath();
+    ctx.clip();
+    ctx.globalAlpha = .42; ctx.lineCap = "round";
+    ctx.strokeStyle = PAL.hairFHi; ctx.lineWidth = 10;
+    ctx.beginPath(); ctx.moveTo(-50, -66); ctx.quadraticCurveTo(-16, -88, 18, -80); ctx.stroke();
+    ctx.globalAlpha = .24; ctx.lineWidth = 7;
+    ctx.beginPath(); ctx.moveTo(30, -74); ctx.quadraticCurveTo(52, -64, 62, -44); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+  }
+
+  function maleHair(fx) {
+    ctx.fillStyle = PAL.hairM;
+    ctx.beginPath();
+    ctx.moveTo(-80, 6);
+    ctx.bezierCurveTo(-88, -78, -48, -118, 0, -118);
+    ctx.bezierCurveTo(48, -118, 88, -78, 80, 6);
+    ctx.quadraticCurveTo(80, -8, 58, -24);
+    ctx.bezierCurveTo(26, -8, -28, -6, -58, -26);
+    ctx.quadraticCurveTo(-78, -12, -80, 6);
+    ctx.closePath(); ctx.fill();
+    /* soft spikes along the crown */
+    for (let i = -3; i <= 3; i++) {
+      const bx = i * 19;
+      ctx.beginPath();
+      ctx.moveTo(bx - 13, -84);
+      ctx.quadraticCurveTo(bx + 2, -110 + Math.abs(i) * 5, bx + 15, -90);
+      ctx.quadraticCurveTo(bx + 2, -86, bx - 13, -84);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(-80, 6);
+    ctx.bezierCurveTo(-88, -78, -48, -118, 0, -118);
+    ctx.bezierCurveTo(48, -118, 88, -78, 80, 6);
+    ctx.closePath(); ctx.clip();
+    ctx.globalAlpha = .38; ctx.lineCap = "round";
+    ctx.strokeStyle = PAL.hairMHi; ctx.lineWidth = 9;
+    ctx.beginPath(); ctx.moveTo(-44, -72); ctx.quadraticCurveTo(-12, -94, 22, -84); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  /** Folded floral headscarf 冬头帕 worn over the crown. */
+  function drawScarf(hp) {
+    ctx.save();
+    ctx.translate(hp.x, HEAD_Y + hp.y);
+    ctx.rotate(P.roll);
+    ctx.scale((1 - Math.abs(P.yaw) * 0.09) * 1.08, 1.08);
+    const fx = P.yaw * 22;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(-94 + fx * .5, -44);
+    ctx.quadraticCurveTo(fx * .5, -150, 94 + fx * .5, -44);
+    ctx.quadraticCurveTo(58 + fx * .5, -74, fx * .5, -74);
+    ctx.quadraticCurveTo(-58 + fx * .5, -74, -94 + fx * .5, -44);
+    ctx.closePath();
+    ctx.fillStyle = PAL.cloth; ctx.fill();
+    ctx.save(); ctx.clip();
+    floral(-104 + fx * .5, -152, 104 + fx * .5, -38, 777, 1.6);
+    const g = ctx.createLinearGradient(-94, 0, 94, 0);
+    g.addColorStop(0, "rgba(86,118,180,.3)"); g.addColorStop(.42, "rgba(255,255,255,0)");
+    g.addColorStop(1, "rgba(86,118,180,.3)");
+    ctx.fillStyle = g; ctx.fillRect(-110, -160, 220, 130);
+    ctx.restore();
+    ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 4; ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = PAL.blue;
+    ctx.beginPath(); ctx.ellipse(fx * .5, -58, 14, 9, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = PAL.blueDeep; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+  }
+
+  /* rim light tinted by the active scene */
+  function rimLight() {
+    const tint = Scenes.current === "lab" ? "rgba(120,220,255,.45)"
+              : Scenes.current === "tulou" ? "rgba(255,180,110,.42)"
+              : "rgba(150,190,255,.38)";
+    ctx.globalCompositeOperation = "source-atop";
+    const g = ctx.createLinearGradient(-VW / 2, -TOP, VW / 2, BOT);
+    g.addColorStop(0, tint); g.addColorStop(.34, "rgba(0,0,0,0)");
+    g.addColorStop(.82, "rgba(0,0,0,0)"); g.addColorStop(1, tint);
+    ctx.fillStyle = g;
+    ctx.fillRect(-VW, -TOP - 60, VW * 2, TOP + BOT + 120);
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  function draw() {
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    ctx.translate(offX, offY);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = "rgba(0,0,0,.26)";
+    ctx.beginPath(); ctx.ellipse(0, BOT - 6, 160, 17, 0, 0, TAU); ctx.fill();
+    drawBody(S.character);
+    drawHead(S.character);
+    rimLight();
+    ctx.restore();
+  }
+
+  return { attach, resize, build, update, draw, setExpression, look, setViseme, nod,
+           get pose() { return P; },
+           get rig() { return { locks, tails, hem, scale, offX, offY, VW, VH, TOP, BOT }; } };
+})();
+
+/* --------------------- 8. Speech: output + input ------------------------- */
+const Speech = (function () {
+  const synth = (typeof window !== "undefined" && window.speechSynthesis) || null;
+  let voices = [], current = null, queueTimer = 0;
+  let timeline = [], tlIndex = 0, tlStart = 0, tlActive = false;
+  let onDone = null;
+
+  const LANG_TAGS = {
+    en:  ["en-SG", "en-GB", "en-AU", "en-US", "en"],
+    zh:  ["zh-CN", "zh-SG", "cmn-Hans-CN", "zh-Hans", "zh"],
+    hak: ["zh-CN", "zh-SG", "zh-HK", "yue-Hant-HK", "zh"]   // no Hakka voice exists — closest Chinese
+  };
+
+  function refreshVoices() {
+    if (!synth) return;
+    try { voices = synth.getVoices() || []; } catch (e) { voices = []; }
+  }
+  if (synth) {
+    refreshVoices();
+    try { synth.addEventListener("voiceschanged", refreshVoices); } catch (e) {
+      synth.onvoiceschanged = refreshVoices;
+    }
+  }
+  function pickVoice(lang) {
+    refreshVoices();
+    if (!voices.length) return null;
+    const tags = LANG_TAGS[lang] || LANG_TAGS.en;
+    for (const tag of tags) {
+      const exact = voices.find(v => v.lang && v.lang.toLowerCase() === tag.toLowerCase());
+      if (exact) return exact;
+    }
+    for (const tag of tags) {
+      const p = tag.split("-")[0].toLowerCase();
+      const near = voices.find(v => v.lang && v.lang.toLowerCase().indexOf(p) === 0);
+      if (near) return near;
+    }
+    return voices[0] || null;
+  }
+  function available() { return !!(synth && (voices.length || (synth.getVoices() || []).length)); }
+
+  /* ---------- viseme construction ---------- */
+  const VIS = {
+    a: [0.95, 0.35], e: [0.58, 0.80], i: [0.34, 1.00], o: [0.86, 0.10], u: [0.50, 0.00],
+    m: [0.03, 0.10], b: [0.05, 0.15], p: [0.05, 0.15],
+    f: [0.22, 0.55], v: [0.22, 0.55], w: [0.30, 0.00],
+    l: [0.42, 0.45], n: [0.30, 0.45], s: [0.22, 0.70], t: [0.28, 0.55],
+    r: [0.40, 0.30], k: [0.40, 0.30], g: [0.40, 0.30], h: [0.45, 0.35],
+    y: [0.35, 0.80], c: [0.30, 0.55], d: [0.32, 0.50], j: [0.32, 0.65],
+    q: [0.35, 0.55], x: [0.28, 0.65], z: [0.24, 0.65]
+  };
+  const CJK_POOL = ["a", "o", "e", "i", "u", "a", "e", "o", "i", "a"];
+
+  function stripMarkup(s) {
+    return String(s || "")
+      .replace(/\*\*/g, "")
+      .replace(/[*_`#>]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  /** Build [{t, open, wide}] frames plus a total duration in ms. */
+  function buildTimeline(text, rate) {
+    const s = stripMarkup(text);
+    const frames = [];
+    let t = 0;
+    const r = clamp(rate || 1, 0.5, 2);
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      if (/\s/.test(ch)) { frames.push({ t, open: 0.06, wide: 0.1 }); t += 55 / r; continue; }
+      if (/[,;:，、；：]/.test(ch)) { frames.push({ t, open: 0.02, wide: 0 }); t += 190 / r; continue; }
+      if (/[.!?。！？…]/.test(ch)) { frames.push({ t, open: 0.02, wide: 0, nod: 1 }); t += 330 / r; continue; }
+      if (/[·—\-–（）()"'’“”《》【】]/.test(ch)) { t += 30 / r; continue; }
+
+      let v;
+      if (hasCJK(ch)) {
+        v = VIS[CJK_POOL[hash32(ch) % CJK_POOL.length]];
+        frames.push({ t, open: v[0] * 0.92, wide: v[1] * 0.8 });
+        t += 168 / r;
+        frames.push({ t, open: v[0] * 0.45, wide: v[1] * 0.6 });
+        t += 42 / r;
+      } else {
+        const lc = ch.toLowerCase();
+        v = VIS[lc];
+        if (!v) { t += 24 / r; continue; }
+        const isVowel = "aeiou".indexOf(lc) !== -1;
+        frames.push({ t, open: v[0], wide: v[1] });
+        t += (isVowel ? 88 : 52) / r;
+      }
+    }
+    frames.push({ t: t + 90 / r, open: 0, wide: 0 });
+    return { frames, dur: t + 140 / r };
+  }
+
+  function startTimeline(text, rate, done) {
+    const built = buildTimeline(text, rate);
+    timeline = built.frames; tlIndex = 0; tlStart = now(); tlActive = true;
+    onDone = done || null;
+    return built.dur;
+  }
+  function stopTimeline() {
+    tlActive = false; timeline = []; tlIndex = 0;
+    Character.setViseme(0, 0);
+  }
+  /** Called every animation frame. */
+  function tick() {
+    if (!tlActive) return;
+    const el = now() - tlStart;
+    let f = null;
+    while (tlIndex < timeline.length && timeline[tlIndex].t <= el) { f = timeline[tlIndex]; tlIndex++; }
+    if (f) {
+      Character.setViseme(f.open, f.wide);
+      if (f.nod) Character.nod(1);
+    }
+    if (tlIndex >= timeline.length) {
+      tlActive = false;
+      Character.setViseme(0, 0);
+      const d = onDone; onDone = null;
+      if (d) d();
+    }
+  }
+  /** Re-anchor lip sync to a real word boundary event from the speech engine. */
+  function resync(charIndex, text) {
+    if (!tlActive || !timeline.length) return;
+    const frac = clamp(charIndex / Math.max(1, stripMarkup(text).length), 0, 1);
+    const target = timeline[timeline.length - 1].t * frac;
+    const drift = (now() - tlStart) - target;
+    if (Math.abs(drift) > 130) {
+      tlStart = now() - target;
+      tlIndex = 0;
+      while (tlIndex < timeline.length && timeline[tlIndex].t <= target) tlIndex++;
+    }
+  }
+
+  /* ---------- speak ---------- */
+  function cancel() {
+    clearTimeout(queueTimer);
+    try { if (synth) synth.cancel(); } catch (e) {}
+    stopTimeline();
+    S.speaking = false;
+    UIState.status("ready");
+  }
+
+  function speak(text, lang, done) {
+    cancel();
+    const clean = stripMarkup(text);
+    if (!clean) { if (done) done(); return; }
+    S.speaking = true;
+    UIState.status("speaking");
+
+    const finish = () => {
+      S.speaking = false;
+      stopTimeline();
+      UIState.status("ready");
+      if (done) done();
+    };
+
+    if (!S.tts || !synth) {                        // silent lip sync only
+      const dur = startTimeline(clean, S.rate, finish);
+      queueTimer = setTimeout(() => { if (S.speaking) finish(); }, dur + 400);
+      return;
+    }
+
+    const v = pickVoice(lang || S.lang);
+    if (!v) {
+      const dur = startTimeline(clean, S.rate, finish);
+      queueTimer = setTimeout(() => { if (S.speaking) finish(); }, dur + 400);
+      return;
+    }
+    current = v;
+    const u = new SpeechSynthesisUtterance(clean);
+    u.voice = v;
+    u.lang = v.lang || (LANG_TAGS[lang || S.lang] || ["en-US"])[0];
+    u.rate = clamp(S.rate, 0.5, 2);
+    u.pitch = clamp(S.pitch * (S.character === "female" ? 1.06 : 0.86), 0.4, 2);
+    u.volume = 1;
+    u.onboundary = (ev) => { if (typeof ev.charIndex === "number") resync(ev.charIndex, clean); };
+    u.onend = finish;
+    u.onerror = finish;
+
+    const dur = startTimeline(clean, S.rate, null);
+    // Safety net: some engines never fire onend.
+    queueTimer = setTimeout(() => { if (S.speaking) finish(); }, dur * 1.9 + 3500);
+    try { synth.speak(u); } catch (e) { finish(); }
+  }
+
+  /* ---------- recognition ---------- */
+  const SR = (typeof window !== "undefined") &&
+             (window.SpeechRecognition || window.webkitSpeechRecognition);
+  let rec = null, recActive = false;
+
+  function recSupported() { return !!SR; }
+  function recLang() {
+    return S.lang === "zh" ? "zh-CN" : S.lang === "hak" ? "zh-CN" : "en-SG";
+  }
+  function startRec(onInterim, onFinal, onErr) {
+    if (!SR) { if (onErr) onErr("unsupported"); return false; }
+    stopRec();
+    try {
+      rec = new SR();
+    } catch (e) { if (onErr) onErr("unsupported"); return false; }
+    rec.lang = recLang();
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.maxAlternatives = 1;
+    let finalText = "";
+    rec.onresult = (ev) => {
+      let interim = "";
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const r = ev.results[i];
+        if (r.isFinal) finalText += r[0].transcript;
+        else interim += r[0].transcript;
+      }
+      if (interim && onInterim) onInterim(interim);
+    };
+    rec.onerror = (ev) => {
+      recActive = false;
+      if (onErr) onErr(ev && ev.error ? ev.error : "error");
+    };
+    rec.onend = () => {
+      recActive = false;
+      if (onFinal) onFinal(finalText.trim());
+    };
+    try { rec.start(); recActive = true; return true; }
+    catch (e) { recActive = false; if (onErr) onErr("start-failed"); return false; }
+  }
+  function stopRec() {
+    if (rec) { try { rec.stop(); } catch (e) {} try { rec.abort(); } catch (e) {} }
+    rec = null; recActive = false;
+  }
+  function isRecording() { return recActive; }
+
+  return { speak, cancel, tick, available, recSupported, startRec, stopRec, isRecording,
+           buildTimeline, stripMarkup, pickVoice, get voices() { refreshVoices(); return voices; } };
+})();
+
+/* ----------------------------- 9. UI layer ------------------------------- */
+const el = {
+  stage:$("#stage"), bg:$("#bgCanvas"), ch:$("#charCanvas"),
+  msgs:$("#msgs"), input:$("#input"), send:$("#sendBtn"), mic:$("#micBtn"),
+  suggest:$("#suggest"), subtitle:$("#subtitle"), pill:$("#statusPill"), pillTxt:$("#statusTxt"),
+  toast:$("#toast"), composer:$("#composer"), boot:$("#boot"), bootBar:$("#bootBar"),
+  bootMsg:$("#bootMsg"), themeIcon:$("#themeIcon")
+};
+
+const UIState = {
+  status(kind) {
+    const map = { ready:"st.ready", listening:"st.listening", speaking:"st.speaking", thinking:"st.thinking" };
+    el.pillTxt.textContent = T(map[kind] || "st.ready");
+    el.pill.className = "show " + (kind === "ready" ? "" : kind);
+    if (kind === "ready") setTimeout(() => { if (!S.speaking && !S.listening && !S.busy)
+      el.pill.classList.remove("show"); }, 1400);
+  },
+  toast(msg) {
+    el.toast.textContent = msg;
+    el.toast.classList.add("show");
+    clearTimeout(UIState._tt);
+    UIState._tt = setTimeout(() => el.toast.classList.remove("show"), 3200);
+  },
+  subtitle(text, rom) {
+    if (!S.subtitles || !text) { el.subtitle.classList.remove("show"); return; }
+    const t = Speech.stripMarkup(text);
+    const lim = (el.stage.clientWidth || 800) < 560 ? 130 : 200;
+    const short = t.length > lim ? t.slice(0, lim - 2) + "…" : t;
+    el.subtitle.innerHTML = `<span class="stxt">${escapeHTML(short)}</span>` +
+      (rom ? `<span class="romn">${escapeHTML(rom)}</span>` : "");
+    el.subtitle.classList.add("show");
+    clearTimeout(UIState._st);
+    UIState._st = setTimeout(() => el.subtitle.classList.remove("show"), Math.max(4200, short.length * 70));
+  }
+};
+
+/* --------------------------- global setters ------------------------------ */
+function setTheme(t) {
+  S.theme = t === "light" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", S.theme);
+  $("#swTheme").setAttribute("aria-checked", String(S.theme === "dark"));
+  el.themeIcon.innerHTML = S.theme === "dark"
+    ? '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'
+    : '<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M19.1 4.9l-1.5 1.5M6.4 17.6l-1.5 1.5"/>';
+}
+function setScene(name) {
+  if (!["sg", "tulou", "lab"].includes(name)) return;
+  S.scene = name;
+  Scenes.set(name);
+  $$(".chip[data-scene]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.scene === name)));
+}
+function setCharacter(kind) {
+  if (kind !== "male" && kind !== "female") return;
+  S.character = kind;
+  Character.build(kind, true);
+  $$(".avbtn[data-char]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.char === kind)));
+}
+function setExpression(name) {
+  S.expression = name;
+  Character.setExpression(name);
+  $$(".exbtn[data-expr]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.expr === name)));
+}
+function setLang(l) {
+  if (!UI[l]) return;
+  S.lang = l;
+  $$(".seg button[data-lang]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === l)));
+  applyI18N();
+  renderSuggestions();
+  renderExplore();
+  renderPhrases();
+  renderAbout();
+}
+function applyI18N() {
+  $$("[data-t]").forEach(n => { n.textContent = T(n.dataset.t); });
+  $("#appTitle").textContent = T("app.title");
+  $("#appSub").textContent = T("app.sub");
+  el.input.placeholder = T("ph.input");
+  document.documentElement.lang = S.lang === "en" ? "en" : "zh";
+}
+
+/* ------------------------------ chat ------------------------------------- */
+function bubble(role, innerHTML, opts) {
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + (role === "me" ? "me" : "ai");
+  const av = document.createElement("div");
+  av.className = "av";
+  av.textContent = role === "me" ? "🙋" : "客";
+  const b = document.createElement("div");
+  b.className = "bub";
+  b.innerHTML = innerHTML;
+  if (opts && opts.speakText) {
+    const tools = document.createElement("div");
+    tools.className = "msgtools";
+    const rep = document.createElement("button");
+    rep.textContent = "🔊 " + T("lbl.replay");
+    rep.onclick = () => { Speech.speak(opts.speakText, opts.lang || S.lang); UIState.subtitle(opts.speakText, opts.rom); };
+    const cp = document.createElement("button");
+    cp.textContent = "⧉ " + T("lbl.copy");
+    cp.onclick = () => {
+      const txt = Speech.stripMarkup(opts.copyText || opts.speakText);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(() => UIState.toast(T("toast.copied")), () => {});
+      }
+    };
+    tools.appendChild(rep); tools.appendChild(cp);
+    b.appendChild(tools);
+  }
+  wrap.appendChild(av); wrap.appendChild(b);
+  el.msgs.appendChild(wrap);
+  el.msgs.parentElement.scrollTop = el.msgs.parentElement.scrollHeight;
+  return wrap;
+}
+function typingBubble() {
+  const w = bubble("ai", '<div class="typing"><i></i><i></i><i></i></div>');
+  w.dataset.typing = "1";
+  return w;
+}
+
+const SUGGESTIONS = {
+  en: ["Who are the Hakka?", "Hakka clan associations in Singapore", "What is a tulou?",
+       "Tell me about yong tau foo", "Teach me a Hakka greeting", "Why is Meizhou the Hakka capital?",
+       "Hakka festivals and events", "Show me the tulou background"],
+  zh: ["客家人是谁？", "新加坡有哪些客家会馆？", "什么是土楼？", "介绍一下酿豆腐",
+       "教我一句客家话问候", "梅州为什么是世界客都？", "客家有什么节庆活动？", "切换到土楼背景"],
+  hak: ["客家人係脉人？", "新加坡有么个客家会馆？", "么个係土楼？", "讲下酿豆腐",
+        "教𠊎一句客家话问好", "做么个梅州喊做世界客都？", "客家有么个节庆？", "换做土楼背景"]
+};
+function renderSuggestions() {
+  el.suggest.innerHTML = "";
+  const list = SUGGESTIONS[S.lang] || SUGGESTIONS.en;
+  const pick = list.slice().sort(() => Math.random() - 0.5).slice(0, 4);
+  pick.forEach(s => {
+    const b = document.createElement("button");
+    b.className = "sg"; b.type = "button"; b.textContent = s;
+    b.onclick = () => { el.input.value = s; send(); };
+    el.suggest.appendChild(b);
+  });
+}
+
+function send() {
+  const text = el.input.value.trim();
+  if (!text || S.busy) return;
+  el.input.value = "";
+  autoGrow();
+  ask(text);
+}
+
+function ask(text) {
+  S.busy = true;
+  bubble("me", fmt(text));
+  S.history.push({ role: "user", text });
+  UIState.status("thinking");
+  setExpression("thinking");
+  const typing = typingBubble();
+
+  const delay = 320 + Math.min(650, text.length * 12);
+  setTimeout(() => {
+    typing.remove();
+    let r, out;
+    try {
+      r = respond(text);
+      out = renderResponse(r, S.lang);
+    } catch (err) {
+      console.error("[concierge] resolver error", err);
+      out = { title:"", text:"Something went wrong resolving that. Please try rephrasing.", rom:"", src:"" };
+      r = { expr:"surprised" };
+    }
+    if (!out) { S.busy = false; UIState.status("ready"); return; }
+
+    let html = "";
+    if (out.title) html += `<b>${escapeHTML(out.title)}</b><br>`;
+    html += fmt(out.text);
+    if (out.rom) html += `<span class="hak"><span class="rom">${escapeHTML(out.rom)}</span></span>`;
+    if (out.src) html += `<span class="src">📚 ${escapeHTML(out.src)}</span>`;
+
+    bubble("ai", html, { speakText: out.text, copyText: (out.title ? out.title + "\n\n" : "") + out.text, rom: out.rom });
+    S.history.push({ role: "ai", text: out.text });
+
+    setExpression(r.expr || "warm");
+    UIState.subtitle(out.text, out.rom);
+    Speech.speak(out.text, S.lang, () => { setExpression("warm"); });
+
+    // follow-up suggestions
+    if (r && r.alts && r.alts.length) {
+      el.suggest.innerHTML = "";
+      r.alts.slice(0, 3).forEach(e => {
+        const b = document.createElement("button");
+        b.className = "sg"; b.type = "button";
+        b.textContent = (e.icon ? e.icon + " " : "") + (e.title[S.lang] || e.title.en);
+        b.onclick = () => ask(e.title.en);
+        el.suggest.appendChild(b);
+      });
+    } else {
+      renderSuggestions();
+    }
+    S.busy = false;
+  }, delay);
+}
+
+function autoGrow() {
+  el.input.style.height = "auto";
+  el.input.style.height = Math.min(110, el.input.scrollHeight) + "px";
+}
+
+/* ----------------------------- explore ----------------------------------- */
+const TIMELINE = [
+  ["4th–19th c.", { en:"Five great southward migrations from the Central Plains", zh:"中原五次大迁徙南下", hak:"中原五摆大迁徙南下" }],
+  ["1822", { en:"Ying Fo Fui Kun and Wui Chiu Fui Kun founded in Singapore", zh:"应和会馆、惠州会馆在新加坡创立", hak:"应和会馆、惠州会馆在新加坡起立" }],
+  ["1858", { en:"Char Yong (Dabu) Association founded", zh:"茶阳（大埔）会馆创立", hak:"茶阳（大埔）会馆起立" }],
+  ["1873", { en:"Foong Shoon Fui Kuan founded", zh:"丰顺会馆创立", hak:"丰顺会馆起立" }],
+  ["1905", { en:"Ying Fo Fui Kun opens Yin Sin School", zh:"应和会馆创办养正学校", hak:"应和会馆办养正学校" }],
+  ["1918", { en:"Eng Teng Association founded", zh:"永定会馆创立", hak:"永定会馆起立" }],
+  ["1929", { en:"Nanyang Khek Community Guild founded as the umbrella body", zh:"南洋客属总会创立，统合各客属团体", hak:"南洋客属总会起立，统合各客属团体" }],
+  ["1998", { en:"Ying Fo Fui Kun gazetted a National Monument", zh:"应和会馆列为国家古迹", hak:"应和会馆列做国家古迹" }],
+  ["2008", { en:"Fujian Tulou inscribed on the UNESCO World Heritage List", zh:"福建土楼列入世界遗产名录", hak:"福建土楼列入世界遗产名录" }],
+  ["2010", { en:"Census: Hakka ≈ 8% of Chinese Singaporeans", zh:"人口普查：客家人约占华族 8%", hak:"人口普查：客家人约占华人 8%" }],
+  ["2020", { en:"Nanyang Khek Community Guild renamed Nanyang Hakka Federation", zh:"南洋客属总会更名 Nanyang Hakka Federation", hak:"南洋客属总会改名 Nanyang Hakka Federation" }]
+];
+
+function renderExplore() {
+  const host = $("#exploreCards");
+  host.innerHTML = "";
+  KB.forEach(e => {
+    const b = document.createElement("button");
+    b.className = "card"; b.type = "button";
+    const title = e.title[S.lang] || e.title.en;
+    const body = Speech.stripMarkup(e.body[S.lang] || e.body.en);
+    b.innerHTML = `<span class="ico">${e.icon || "•"}</span>
+                   <span class="t">${escapeHTML(title)}</span>
+                   <span class="d">${escapeHTML(body.slice(0, 72))}…</span>`;
+    b.onclick = () => {
+      switchTab("chat");
+      ask(e.title.en);
+    };
+    host.appendChild(b);
+  });
+
+  const tl = $("#timeline");
+  tl.innerHTML = "";
+  TIMELINE.forEach(([yr, txt]) => {
+    const d = document.createElement("div");
+    d.className = "row";
+    d.innerHTML = `<div><div class="lbl">${escapeHTML(yr)}</div>
+                   <div class="sub">${escapeHTML(txt[S.lang] || txt.en)}</div></div>`;
+    tl.appendChild(d);
+  });
+}
+
+/* ------------------------------ learn ------------------------------------ */
+function renderPhrases() {
+  const tabs = $("#lessonTabs");
+  tabs.innerHTML = "";
+  PHRASE_CATS.forEach(([key, en, zh, hak]) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = S.lang === "en" ? en : S.lang === "zh" ? zh : hak;
+    b.setAttribute("aria-pressed", String(S.lessonCat === key));
+    b.onclick = () => { S.lessonCat = key; renderPhrases(); };
+    tabs.appendChild(b);
+  });
+
+  const host = $("#phrases");
+  host.innerHTML = "";
+  (PHRASES[S.lessonCat] || []).forEach(p => {
+    const d = document.createElement("div");
+    d.className = "phrase";
+    d.innerHTML = `<div class="top">
+        <div>
+          <div class="en">${escapeHTML(p.en)}</div>
+          <div class="zh cjk">${escapeHTML(p.zh)}</div>
+          <div class="py">Mandarin: ${escapeHTML(p.py)}</div>
+          <div class="pfs">Hakka: ${escapeHTML(p.pfs)}</div>
+        </div>
+        <button class="say" aria-label="Hear ${escapeHTML(p.en)}">
+          <svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+        </button>
+      </div>`;
+    $(".say", d).onclick = () => {
+      setExpression("happy");
+      Speech.speak(p.zh, "hak", () => setExpression("warm"));
+      UIState.subtitle(p.zh + " — " + p.en, p.pfs);
+    };
+    host.appendChild(d);
+  });
+}
+
+/* ---------------------------- about / sources ---------------------------- */
+function renderAbout() {
+  const intro = {
+    en:"This concierge runs entirely offline in your browser. Nothing is uploaded and no network call is ever made. Every factual answer is drawn from a hand-curated knowledge base compiled from the sources below; Hakka romanisation follows Pha̍k-fa-sṳ based on the Meixian variety and is a practical approximation for learners. Dates for festivals and events change year to year — please confirm with the organising association.",
+    zh:"本导览完全在您的浏览器内离线运行，不上传任何数据，也不发出任何网络请求。所有事实性内容均取自依下列出处人工整理的知识库；客家话拼音采用白话字，以梅县音为准，属学习用的实用近似。节庆日期逐年不同，请以主办团体公告为准。",
+    hak:"这个导览完全在你个浏览器内底离线行，无上传么个，也无发网络请求。逐句事实都出自照下背出处人手整理个资料；客家拼音用白话字，以梅县音为准，係学习用个近似写法。节庆日期逐年无共，请照主办单位个公告。"
+  };
+  const list = Object.keys(SOURCES).map(k => "• " + SOURCES[k]).join("\n");
+  $("#aboutTxt").textContent = (intro[S.lang] || intro.en) + "\n\n" + list;
+  $("#aboutTxt").style.whiteSpace = "pre-line";
+}
+
+/* ------------------------------ tabs ------------------------------------- */
+function switchTab(name) {
+  $$(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+  $$(".tabpanel").forEach(p => p.classList.toggle("active", p.id === "pane-" + name));
+  el.composer.style.display = name === "chat" ? "flex" : "none";
+}
+
+/* ------------------------------ diagnostics ------------------------------ */
+function renderDiag() {
+  const rows = [
+    ["Speech synthesis", Speech.available() ? ["ok", "AVAILABLE"] : ["warn", "NOT FOUND"]],
+    ["Voices detected", ["", String(Speech.voices.length)]],
+    ["Speech recognition", Speech.recSupported() ? ["ok", "AVAILABLE"] : ["warn", "UNSUPPORTED"]],
+    ["Hakka voice", ["warn", "FALLBACK → CHINESE"]],
+    ["Knowledge entries", ["ok", String(KB.length)]],
+    ["Phrases", ["ok", String(Object.keys(PHRASES).reduce((a, k) => a + PHRASES[k].length, 0))]],
+    ["Canvas 2D", (el.bg.getContext && el.bg.getContext("2d")) ? ["ok", "OK"] : ["err", "FAILED"]],
+    ["Network calls made", ["ok", "0 — fully offline"]]
+  ];
+  $("#diag").innerHTML = rows.map(([k, v]) =>
+    `<div class="dl"><span>${escapeHTML(k)}</span><span class="badge ${v[0]}">${escapeHTML(v[1])}</span></div>`
+  ).join("");
+}
+
+/* ------------------------------ self tests ------------------------------- */
+function runSelfTests() {
+  const out = [];
+  let pass = 0, fail = 0;
+  const ok = (name, cond, detail) => {
+    if (cond) { pass++; out.push("✅ " + name); }
+    else { fail++; out.push("❌ " + name + (detail ? " → " + detail : "")); }
+  };
+
+  // 1. knowledge base integrity
+  const ids = new Set();
+  let kbOK = true, kbWhy = "";
+  for (const e of KB) {
+    if (ids.has(e.id)) { kbOK = false; kbWhy = "duplicate id " + e.id; break; }
+    ids.add(e.id);
+    for (const L of ["en", "zh", "hak"]) {
+      if (!e.title[L] || !e.body[L] || e.body[L].length < 40) {
+        kbOK = false; kbWhy = e.id + " missing/short " + L; break;
+      }
+    }
+    if (!kbOK) break;
+    if (!Array.isArray(e.k) || e.k.length < 3) { kbOK = false; kbWhy = e.id + " too few keywords"; break; }
+  }
+  ok("Knowledge base integrity (" + KB.length + " entries, 3 languages)", kbOK, kbWhy);
+
+  // 2. source references resolve
+  let srcOK = true, srcWhy = "";
+  for (const e of KB) for (const s of (e.src || []))
+    if (!SOURCES[s]) { srcOK = false; srcWhy = e.id + " → " + s; }
+  ok("All source references resolve", srcOK, srcWhy);
+
+  // 3. i18n key parity
+  const keys = Object.keys(UI.en);
+  const missing = [];
+  for (const L of ["zh", "hak"]) for (const k of keys) if (!(k in UI[L])) missing.push(L + ":" + k);
+  ok("UI string parity across EN / 中文 / 客家", missing.length === 0, missing.slice(0, 3).join(", "));
+
+  // 4. phrasebook integrity
+  let phOK = true, phWhy = "";
+  for (const c of Object.keys(PHRASES)) for (const p of PHRASES[c])
+    if (!p.en || !p.zh || !p.pfs || !p.py) { phOK = false; phWhy = c + " / " + (p.en || "?"); }
+  const catsCovered = PHRASE_CATS.every(c => Array.isArray(PHRASES[c[0]]));
+  ok("Phrasebook complete (EN + 汉字 + pinyin + Pha̍k-fa-sṳ)", phOK && catsCovered, phWhy);
+
+  // 5. intent routing
+  const cases = [
+    ["hello there", "intent"],
+    ["thank you so much", "intent"],
+    ["who are you?", "intent"],
+    ["what is a tulou", "kb", "tulou"],
+    ["tell me about yong tau foo", "kb", "yongtaufu"],
+    ["hakka clan associations in singapore", "kb", "sg_assoc"],
+    ["新加坡客家人", "kb", "sg_history"],
+    ["围龙屋", "kb", "weilongwu"],
+    ["梅州", "kb", "meizhou"],
+    ["盐焗鸡", "kb", "saltchicken"],
+    ["客家山歌", "kb", "hillsongs"],
+    ["how many tones does hakka have", "kb", "tones"],
+    ["qwertyuiop zxcvbnm", "none"]
+  ];
+  let routeOK = true, routeWhy = "";
+  for (const [q, kind, id] of cases) {
+    const r = respond(q);
+    if (!r || r.kind !== kind || (id && (!r.kb || r.kb.id !== id))) {
+      routeOK = false;
+      routeWhy = `"${q}" → ${r ? r.kind + (r.kb ? "/" + r.kb.id : "") : "null"} (expected ${kind}${id ? "/" + id : ""})`;
+      break;
+    }
+  }
+  ok("Intent & knowledge routing (" + cases.length + " cases)", routeOK, routeWhy);
+
+  // 6. every KB entry is reachable by its own English title
+  let reach = 0, unreachable = [];
+  for (const e of KB) {
+    const r = respond(e.title.en);
+    if (r && r.kb && r.kb.id === e.id) reach++;
+    else unreachable.push(e.id);
+  }
+  ok("Every entry reachable from its title (" + reach + "/" + KB.length + ")",
+     unreachable.length === 0, unreachable.slice(0, 4).join(", "));
+
+  // 7. renderResponse in all three languages
+  let rrOK = true, rrWhy = "";
+  for (const L of ["en", "zh", "hak"]) {
+    const r = respond("what is a tulou");
+    const o = renderResponse(r, L);
+    if (!o || !o.text || o.text.length < 40) { rrOK = false; rrWhy = L; }
+  }
+  ok("Answers render in all three languages", rrOK, rrWhy);
+
+  // 8. commands mutate state and are reversible
+  const st0 = { c: S.character, s: S.scene, t: S.theme, l: S.lang };
+  respond("switch to the male character");
+  const c1 = S.character === "male";
+  respond("show the tulou background");
+  const s1 = S.scene === "tulou";
+  respond("switch to light theme");
+  const t1 = S.theme === "light";
+  setCharacter(st0.c); setScene(st0.s); setTheme(st0.t); setLang(st0.l);
+  ok("Voice/text commands control character, scene and theme",
+     c1 && s1 && t1, `char:${c1} scene:${s1} theme:${t1}`);
+
+  // 9. viseme timeline is monotonic and finite
+  const tl = Speech.buildTimeline("Hello, welcome! 你好，欢迎。", 1);
+  let mono = tl.frames.length > 6 && isFinite(tl.dur) && tl.dur > 0;
+  for (let i = 1; i < tl.frames.length; i++) {
+    const f = tl.frames[i];
+    if (!(f.t >= tl.frames[i - 1].t) || !isFinite(f.t) ||
+        f.open < 0 || f.open > 1.2 || f.wide < 0 || f.wide > 1.2) { mono = false; break; }
+  }
+  ok("Lip-sync timeline monotonic & bounded (" + tl.frames.length + " frames)", mono);
+
+  // 10. physics stability — 600 simulated steps must not blow up
+  Character.build(S.character, true);
+  let finite = true;
+  for (let i = 0; i < 600; i++) Character.update(i * 0.016, 16.7);
+  const p = Character.pose;
+  for (const k of ["yaw", "pitch", "roll", "eyeX", "eyeY", "mouthOpen", "blink"])
+    if (!isFinite(p[k]) || Math.abs(p[k]) > 50) { finite = false; break; }
+  ok("Character rig stable over 600 frames (no NaN / blow-up)", finite);
+
+  // 11. canvases sized and drawing
+  let canvasOK = false;
+  try {
+    const c = el.ch.getContext("2d");
+    canvasOK = !!c && el.ch.width > 0 && el.ch.height > 0 && el.bg.width > 0;
+  } catch (e) {}
+  ok("Both canvases initialised with non-zero size", canvasOK);
+
+  // 12. no external resource references in the document
+  const externals = $$("script[src], link[href], img[src], iframe").filter(n => {
+    const v = n.getAttribute("src") || n.getAttribute("href") || "";
+    return /^(https?:)?\/\//i.test(v);
+  });
+  ok("Fully offline — zero external resources referenced", externals.length === 0,
+     externals.length + " found");
+
+  // 13. scene registry
+  const scenesOK = ["sg", "tulou", "lab"].every(n => { setScene(n); return S.scene === n; });
+  setScene(st0.s);
+  ok("All three scenes selectable", scenesOK);
+
+  const head = `AI Hakka Concierge — self-test\n${new Date().toLocaleString()}\n` +
+               `${pass} passed · ${fail} failed\n${"─".repeat(42)}\n`;
+  const log = $("#testLog");
+  log.hidden = false;
+  log.textContent = head + out.join("\n");
+  UIState.toast(fail === 0 ? `All ${pass} tests passed ✓` : `${fail} of ${pass + fail} tests failed`);
+  return { pass, fail };
+}
+
+/* ------------------------------ render loop ------------------------------ */
+let last = now(), t0 = now(), rafId = 0;
+function fitCanvas(c) {
+  const r = el.stage.getBoundingClientRect();
+  const d = Math.min(window.devicePixelRatio || 1, S.quality === "high" ? 2.5 : 2);
+  const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+  c.width = Math.round(w * d); c.height = Math.round(h * d);
+  return { w, h, d };
+}
+function onResize() {
+  const a = fitCanvas(el.bg);
+  const b = fitCanvas(el.ch);
+  Scenes.resize(a.w, a.h, a.d);
+  Character.resize(b.w, b.h, b.d);
+}
+function loop() {
+  rafId = requestAnimationFrame(loop);
+  const n = now();
+  let dt = n - last; last = n;
+  if (dt > 60) dt = 60;
+  const t = (n - t0) / 1000;
+  try {
+    Speech.tick();
+    Character.update(t, dt);
+    Scenes.draw(t);
+    Character.draw(t, dt);
+  } catch (err) {
+    console.error("[concierge] frame error", err);
+    cancelAnimationFrame(rafId);
+    setTimeout(() => { last = now(); loop(); }, 400);
+  }
+}
+
+/* ------------------------------ 10. Wiring ------------------------------- */
+function bindSwitch(node, get, set) {
+  const toggle = () => { set(!get()); node.setAttribute("aria-checked", String(get())); };
+  node.addEventListener("click", toggle);
+  node.addEventListener("keydown", e => {
+    if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggle(); }
+  });
+  node.setAttribute("aria-checked", String(get()));
+}
+
+function wire() {
+  // language
+  $$(".seg button[data-lang]").forEach(b => b.onclick = () => setLang(b.dataset.lang));
+  // voice master toggle
+  $("#voiceBtn").onclick = () => {
+    S.tts = !S.tts;
+    $("#voiceBtn").setAttribute("aria-pressed", String(S.tts));
+    $("#voiceBtn").classList.toggle("on", S.tts);
+    $("#swTts").setAttribute("aria-checked", String(S.tts));
+    if (!S.tts) Speech.cancel();
+  };
+  $("#voiceBtn").classList.toggle("on", S.tts);
+  // theme
+  $("#themeBtn").onclick = () => setTheme(S.theme === "dark" ? "light" : "dark");
+  // scene / character / expression
+  $$(".chip[data-scene]").forEach(b => b.onclick = () => setScene(b.dataset.scene));
+  $$(".avbtn[data-char]").forEach(b => b.onclick = () => setCharacter(b.dataset.char));
+  $$(".exbtn[data-expr]").forEach(b => b.onclick = () => setExpression(b.dataset.expr));
+  // tabs
+  $$(".tabs button").forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+
+  // composer
+  el.send.onclick = send;
+  el.input.addEventListener("input", autoGrow);
+  el.input.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+
+  // microphone
+  el.mic.onclick = () => {
+    if (Speech.isRecording()) { Speech.stopRec(); return; }
+    if (!Speech.recSupported()) { UIState.toast(T("toast.nomic")); el.input.focus(); return; }
+    Speech.cancel();
+    const started = Speech.startRec(
+      interim => { el.input.value = interim; autoGrow(); },
+      final => {
+        S.listening = false;
+        el.mic.classList.remove("rec");
+        UIState.status("ready");
+        if (final) { el.input.value = final; autoGrow(); setTimeout(send, 120); }
+      },
+      err => {
+        S.listening = false;
+        el.mic.classList.remove("rec");
+        UIState.status("ready");
+        UIState.toast(err === "not-allowed" || err === "service-not-allowed"
+          ? T("toast.micdenied") : T("toast.nomic"));
+      }
+    );
+    if (started) {
+      S.listening = true;
+      el.mic.classList.add("rec");
+      UIState.status("listening");
+      setExpression("thinking");
+    }
+  };
+
+  // settings
+  bindSwitch($("#swTheme"), () => S.theme === "dark", v => setTheme(v ? "dark" : "light"));
+  bindSwitch($("#swSubs"),  () => S.subtitles, v => { S.subtitles = v; if (!v) el.subtitle.classList.remove("show"); });
+  bindSwitch($("#swPhysics"), () => S.physics, v => { S.physics = v; Character.build(S.character, true); });
+  bindSwitch($("#swTts"), () => S.tts, v => {
+    S.tts = v;
+    $("#voiceBtn").setAttribute("aria-pressed", String(v));
+    $("#voiceBtn").classList.toggle("on", v);
+    if (!v) Speech.cancel();
+  });
+  $("#selQuality").onchange = e => { S.quality = e.target.value; onResize(); };
+  $("#rngRate").oninput = e => { S.rate = parseFloat(e.target.value); $("#rateVal").textContent = S.rate.toFixed(2); };
+  $("#rngPitch").oninput = e => { S.pitch = parseFloat(e.target.value); $("#pitchVal").textContent = S.pitch.toFixed(2); };
+  $("#runTests").onclick = () => { renderDiag(); runSelfTests(); };
+  $("#resetBtn").onclick = () => {
+    Speech.cancel();
+    el.msgs.innerHTML = "";
+    S.history = [];
+    welcome();
+    UIState.toast(T("toast.reset"));
+  };
+
+  // pointer look-at
+  const track = (cx, cy) => {
+    const r = el.stage.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    Character.look(((cx - r.left) / r.width - 0.5) * 2, ((cy - r.top) / r.height - 0.45) * 2);
+  };
+  el.stage.addEventListener("pointermove", e => track(e.clientX, e.clientY), { passive: true });
+  el.stage.addEventListener("pointerdown", e => {
+    track(e.clientX, e.clientY);
+    setExpression(S.expression === "happy" ? "warm" : "happy");
+  });
+  window.addEventListener("blur", () => Speech.cancel());
+  document.addEventListener("visibilitychange", () => { if (document.hidden) Speech.cancel(); });
+
+  // resize
+  const ro = debounce(onResize, 120);
+  window.addEventListener("resize", ro);
+  window.addEventListener("orientationchange", () => setTimeout(onResize, 260));
+  if (window.ResizeObserver) { try { new ResizeObserver(ro).observe(el.stage); } catch (e) {} }
+}
+
+/* ------------------------------ welcome ---------------------------------- */
+function welcome() {
+  const w = {
+    en:{ t:"Welcome — 欢迎 — Fôn-ngiàng!",
+         b:"I'm **A-Moi**, your AI Hakka concierge. I can talk with you in **English, Mandarin or Hakka**, by typing or by voice.\n\nAsk me about Hakka **history and migration**, the **clan associations of Singapore**, **tulou and weilongwu** architecture, **food**, **hill songs**, **festivals** — or ask me to teach you some Hakka.\n\nYou can also just say “switch to the male character” or “show me the tulou background”.",
+         r:"Fôn-ngiàng! Ngài he ngì ke Hak-kâ thùng-chṳ." },
+    zh:{ t:"欢迎 — Welcome — Fôn-ngiàng!",
+         b:"我是**阿妹**，您的客家数字同志。可以用**英语、华语或客家话**与我交谈，打字或说话都行。\n\n客家的**历史与迁徙**、**新加坡的客属会馆**、**土楼与围龙屋**、**饮食**、**山歌**、**节庆**，都可以问我，也可以让我教您几句客家话。\n\n您也可以直接说「换成男角色」或「切换到土楼背景」。",
+         r:"Fôn-ngiàng! Ngài he ngì ke Hak-kâ thùng-chṳ." },
+    hak:{ t:"欢迎 Fôn-ngiàng!",
+         b:"𠊎係**阿妹**，你个客家数字同志。用**英文、华语抑係客家话**同𠊎讲都做得，打字抑係开声都做得。\n\n客家个**历史㧯迁徙**、**新加坡个客属会馆**、**土楼㧯围龙屋**、**食个**、**山歌**、**节庆**，样样问得，也做得喊𠊎教你几句客家话。\n\n你也做得直接讲「换男个角色」抑係「换做土楼背景」。",
+         r:"Fôn-ngiàng! Ngài he ngì ke Hak-kâ thùng-chṳ." }
+  };
+  const m = w[S.lang] || w.en;
+  bubble("ai", `<b>${escapeHTML(m.t)}</b><br>${fmt(m.b)}<span class="hak"><span class="rom">${escapeHTML(m.r)}</span></span>`,
+         { speakText: m.b, copyText: m.t + "\n\n" + m.b, rom: m.r });
+  renderSuggestions();
+}
+
+/* ------------------------------- boot ------------------------------------ */
+function boot() {
+  const steps = [
+    [12,  "Loading knowledge base…"],
+    [30,  "Building character rig…"],
+    [50,  "Warming up physics…"],
+    [68,  "Painting scenes…"],
+    [84,  "Checking speech engine…"],
+    [100, "Ready."]
+  ];
+  let i = 0;
+  const advance = () => {
+    if (i >= steps.length) {
+      el.boot.classList.add("hide");
+      setTimeout(() => { el.boot.style.display = "none"; }, 700);
+      return;
+    }
+    el.bootBar.style.width = steps[i][0] + "%";
+    el.bootMsg.textContent = steps[i][1];
+    i++;
+    setTimeout(advance, 150);
+  };
+  advance();
+}
+
+function init() {
+  try {
+    Scenes.attach(el.bg);
+    Character.attach(el.ch);
+    onResize();
+
+    setTheme("dark");
+    setScene("sg");
+    setCharacter("female");
+    setExpression("warm");
+    setLang("en");
+    switchTab("chat");
+    applyI18N();
+    renderExplore();
+    renderPhrases();
+    renderAbout();
+    renderDiag();
+    wire();
+
+    $("#rateVal").textContent = S.rate.toFixed(2);
+    $("#pitchVal").textContent = S.pitch.toFixed(2);
+    $("#selQuality").value = S.quality;
+
+    welcome();
+    loop();
+    boot();
+
+    // Voice list often arrives asynchronously; refresh the diagnostics when it does.
+    setTimeout(renderDiag, 1200);
+    setTimeout(renderDiag, 3000);
+
+    // Expose a tiny API for automated checking.
+    window.HakkaConcierge = {
+      state: S, respond, renderResponse, KB, PHRASES, runSelfTests,
+      setScene, setCharacter, setTheme, setLang, setExpression, ask
+    };
+  } catch (err) {
+    console.error("[concierge] init failed", err);
+    el.boot.innerHTML = '<div class="inner"><div class="bm">!</div><h2>Startup error</h2>' +
+      '<p style="max-width:340px">' + escapeHTML(String(err && err.message || err)) + '</p></div>';
+  }
+}
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+else init();
+</script>
+</body>
+</html>
